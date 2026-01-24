@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Optimize</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <main class="container heroCenter">
+      <div class="optWrap">
+    <section class="heroBig">
+      <div class="kicker">AI Recommendation</div>
+      <h1 class="headline">Improve your resume with<br/>clearer, stronger content.</h1>
+    </section>
+
+    <section class="pillRow">
+      <!-- Upload pill -->
+      <label class="pill pillUpload" for="resumeFile">
+        <input id="resumeFile" type="file" accept=".pdf,.doc,.docx" />
+        <span class="pillIcon" aria-hidden="true">⬆</span>
+        <span id="uploadLabel" class="pillText">Upload</span>
+      </label>
+
+      <!-- Industry pill -->
+      <div class="pill pillSelect">
+        <select id="industrySelect" class="pillSelectEl">
+          <option value="" selected disabled>Industries</option>
+          <option value="software">Software Engineering / Computer Science</option>
+          <option value="data_ai">Data Science / AI</option>
+          <option value="computer_eng">Computer Engineering</option>
+          <option value="product">Product Management</option>
+          <option value="ux_design">Product / UX Design</option>
+
+          <option value="accounting">Accounting / Audit</option>
+          <option value="business">Business / General Management</option>
+          <option value="finance">Finance</option>
+          <option value="consulting">Consulting</option>
+          <option value="marketing">Marketing / Communications</option>
+
+          <option value="engineering_mech">Mechanical Engineering</option>
+          <option value="engineering_eee">Electrical / Electronic Engineering</option>
+          <option value="engineering_civil">Civil Engineering</option>
+          <option value="engineering_chem">Chemical Engineering</option>
+          <option value="engineering_aero">Aerospace Engineering</option>
+          <option value="engineering_bio">Bioengineering</option>
+          <option value="engineering_env">Environmental Engineering</option>
+          <option value="engineering_iem">Information Engineering & Media</option>
+          <option value="engineering_materials">Materials Engineering</option>
+
+          <option value="science">Science / Research</option>
+          <option value="economics_policy">Economics / Public Policy</option>
+          <option value="education">Education (NIE)</option>
+          <option value="healthcare">Healthcare / Medicine</option>
+        </select>
+        <span class="pillChevron" aria-hidden="true">▼</span>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="ctaRow">
+      <button id="optimizeBtn" class="primary bigCta">Optimize</button>
+      <div id="status" class="status"></div>
+    </section>
+
+    <!-- Results (same as before) -->
+    <section id="results" class="results hidden">
+      <section class="cardsRow">
+        <div class="card mini" id="fitCard"></div>
+        <div class="card mini" id="clarityCard"></div>
+        <div class="card mini" id="keywordsCard"></div>
+      </section>
+
+      <section class="card">
+        <h2>What recruiters look for in this industry</h2>
+        <ul id="recruiterChecklist"></ul>
+      </section>
+
+      <section class="split">
+        <section class="card">
+          <h2>Original</h2>
+          <pre id="originalText" class="resumeBox"></pre>
+        </section>
+        <section class="card">
+          <h2>Optimized</h2>
+          <pre id="optimizedText" class="resumeBox"></pre>
+        </section>
+      </section>
+
+      <section class="card">
+        <h2>Pinpoint fixes</h2>
+        <div id="issues"></div>
+      </section>
+    </section>
+    </div>
+
+  </main>
+
+  <!-- Floating Tab Bar -->
+  <nav class="tabbar" aria-label="Primary">
+    <a href="/" data-tab="home">
+      <span class="icon">🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="/results" data-tab="jobs">
+      <span class="icon">💼</span>
+      <span>Listings</span>
+    </a>
+    <a href="/optimize" data-tab="optimize" class="active">
+      <span class="icon">📄</span>
+      <span>Optimize</span>
+    </a>
+    <a href="/job" data-tab="profile">
+      <span class="icon">👤</span>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <script src="/static/optimize.js"></script>
+</body>
+</html>

@@ -74,6 +74,11 @@ def home():
 def results_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "results.html"))
 
+@app.get("/optimize")
+def optimize_page():
+    return FileResponse(os.path.join(FRONTEND_DIR, "optimize.html"))
+
+
 @app.get("/api/search")
 def search(
     q: str = Query(..., min_length=1),

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, HTTPException, UploadFile, File, Query, Form
 from pydantic import BaseModel
 
 from server.services.skill_gap_service import analyze_skill_gap
@@ -6,6 +6,7 @@ from server.services.ocr_service import ocr_bytes
 from server.services.jobs_service import get_job_by_id
 from server.services.career_suggest_service import career_suggest
 from server.services.critique_service import critique_review
+from server.services.resume_optimize_service import optimize_resume
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
 
@@ -34,6 +35,16 @@ def skill_gap(req: SkillGapRequest):
         return analyze_skill_gap(req.resume_text, req.job_title, req.job_description)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/optimize")
+async def resume_optimize(resume: UploadFile = File(...), industry: str = Form(...)):
+    file_bytes = await resume.read()
+    data = await optimize_resume(
+        file_bytes=file_bytes,
+        filename=resume.filename,
+        industry_key=industry
+    )
+    return data
 
 
 @router.post("/ocr-skill-gap")

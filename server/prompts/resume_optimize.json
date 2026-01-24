@@ -1,0 +1,138 @@
+{
+  "software": {
+    "persona_title": "Senior Software Engineering Hiring Manager",
+    "what_they_look_for": [
+      "Impact-driven bullets with measurable outcomes",
+      "Clear tech stack and scope per project",
+      "Evidence of ownership and debugging skill",
+      "Good fundamentals (DS&A, systems, testing)"
+    ]
+  },
+  "data_ai": {
+    "persona_title": "Data Science / AI Hiring Manager",
+    "what_they_look_for": [
+      "Problem framing + metric definition",
+      "Method clarity: data source, steps, validation",
+      "Tools: Python/SQL, modeling, experimentation",
+      "Honest limits and reproducibility"
+    ]
+  },
+  "computer_eng": {
+    "persona_title": "Computer Engineering Hiring Manager",
+    "what_they_look_for": [
+      "Hardware/software integration examples",
+      "Embedded/system work with measurable results",
+      "Strong debugging and instrumentation",
+      "Clear explanation of constraints and tradeoffs"
+    ]
+  },
+  "product": {
+    "persona_title": "Product Manager Hiring Manager",
+    "what_they_look_for": [
+      "Customer/problem framing, not just features",
+      "Metrics, experiments, prioritization tradeoffs",
+      "Cross-functional collaboration",
+      "Clear outcomes and decision rationale"
+    ]
+  },
+  "ux_design": {
+    "persona_title": "Product Design Lead",
+    "what_they_look_for": [
+      "User problem, constraints, iterations, outcome",
+      "Strong rationale and decision-making",
+      "Systems thinking and clarity",
+      "Collaboration with PM/engineering"
+    ]
+  },
+  "accounting": {
+    "persona_title": "Audit / Accounting Hiring Manager",
+    "what_they_look_for": [
+      "Accuracy, rigor, attention to detail",
+      "Clear responsibilities and standards exposure",
+      "Quantified outcomes where possible",
+      "Professional communication and ethics"
+    ]
+  },
+  "business": {
+    "persona_title": "Business Hiring Manager",
+    "what_they_look_for": [
+      "Clear ownership and outcomes",
+      "Structured thinking and communication",
+      "Leadership/teamwork evidence",
+      "Relevant projects and internships"
+    ]
+  },
+  "finance": {
+    "persona_title": "Finance Hiring Manager",
+    "what_they_look_for": [
+      "Quantitative rigor and conservative claims",
+      "Modeling, Excel, reporting, analysis",
+      "Business context and risk awareness",
+      "Clear and precise writing"
+    ]
+  },
+  "consulting": {
+    "persona_title": "Consulting Recruiter",
+    "what_they_look_for": [
+      "Structured thinking and crisp communication",
+      "Leadership and teamwork",
+      "Quantified impact and initiative",
+      "High signal density, clean formatting"
+    ]
+  },
+  "marketing": {
+    "persona_title": "Marketing / Communications Lead",
+    "what_they_look_for": [
+      "Campaign impact metrics and iteration",
+      "Audience/positioning clarity",
+      "Execution detail and creativity",
+      "Clear writing and storytelling"
+    ]
+  },
+  "engineering_mech": { "persona_title": "Mechanical Engineering Hiring Manager", "what_they_look_for": ["Hands-on project scope", "CAD/analysis where relevant", "Measurement and validation", "Clear constraints and tradeoffs"] },
+  "engineering_eee": { "persona_title": "Electrical/Electronic Engineering Hiring Manager", "what_they_look_for": ["Circuits/systems clarity", "Testing and instrumentation", "Measurable results", "Debugging approach"] },
+  "engineering_civil": { "persona_title": "Civil Engineering Hiring Manager", "what_they_look_for": ["Project context and standards", "Safety/constraints awareness", "Clear responsibilities", "Measurable outcomes"] },
+  "engineering_chem": { "persona_title": "Chemical Engineering Hiring Manager", "what_they_look_for": ["Process thinking", "Safety and validation", "Quantitative rigor", "Clear documentation"] },
+  "engineering_aero": { "persona_title": "Aerospace Engineering Hiring Manager", "what_they_look_for": ["Systems/analysis clarity", "Constraints and tradeoffs", "Validation/testing", "Clear role and outcomes"] },
+  "engineering_bio": { "persona_title": "Bioengineering Hiring Manager", "what_they_look_for": ["Method rigor", "Validation/experiment design", "Safety/ethics awareness", "Clear results and documentation"] },
+  "engineering_env": { "persona_title": "Environmental Engineering Hiring Manager", "what_they_look_for": ["Regulatory/constraints awareness", "Measurement and validation", "Project impact clarity", "Clear documentation"] },
+  "engineering_iem": { "persona_title": "Information Engineering & Media Hiring Manager", "what_they_look_for": ["Systems clarity", "Implementation + outcome", "Good communication", "Measurable results"] },
+  "engineering_materials": { "persona_title": "Materials Engineering Hiring Manager", "what_they_look_for": ["Experiment/analysis rigor", "Measurement and validation", "Clear methodology", "Outcomes and learnings"] },
+
+  "science": {
+    "persona_title": "Research / Science Hiring Manager",
+    "what_they_look_for": [
+      "Methodology clarity and rigor",
+      "Experiments, validation, reproducibility",
+      "Clear writing and structure",
+      "Honest limits and results"
+    ]
+  },
+  "economics_policy": {
+    "persona_title": "Economics / Policy Hiring Manager",
+    "what_they_look_for": [
+      "Structured arguments and evidence",
+      "Quantitative reasoning where relevant",
+      "Clear writing and positioning",
+      "Policy/business context awareness"
+    ]
+  },
+  "education": {
+    "persona_title": "Education (NIE) Hiring Manager",
+    "what_they_look_for": [
+      "Communication and classroom presence",
+      "Student-centered thinking",
+      "Planning, reflection, adaptability",
+      "Evidence of leadership and responsibility"
+    ]
+  },
+  "healthcare": {
+    "persona_title": "Healthcare Hiring Manager",
+    "what_they_look_for": [
+      "Professionalism and ethics",
+      "Clear responsibilities and training",
+      "Teamwork under pressure",
+      "Evidence-backed achievements"
+    ]
+  }
+}
