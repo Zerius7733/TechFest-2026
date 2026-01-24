@@ -14,3 +14,4 @@ __pycache__/
 
 # Local test artifacts
 resume.pdf
+server/data/

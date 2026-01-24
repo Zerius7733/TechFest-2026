@@ -7,6 +7,18 @@ from server.services.jobs_service import get_job_by_id
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
 
+from pydantic import BaseModel
+from server.services.course_match_service import recommend_courses_from_missing_skills
+
+
+class CourseRecRequest(BaseModel):
+    missing_skills: list[str]
+    top_k: int = 8
+
+
+@router.post("/course-recommendations")
+def course_recommendations(payload: CourseRecRequest):
+    return recommend_courses_from_missing_skills(payload.missing_skills, top_k=payload.top_k)
 
 class SkillGapRequest(BaseModel):
     resume_text: str
