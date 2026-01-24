@@ -416,10 +416,10 @@
           </div>
         `;
 
-        // Prefer going to your internal details page
-        if (jobId) {
-          return `<a class="card-link" href="job.html?id=${encodeURIComponent(jobId)}">${content}</a>`;
-        }
+      // Prefer going to your internal details page
+      if (jobId) {
+        return `<a class="card-link" href="job?id=${encodeURIComponent(jobId)}">${content}</a>`;
+      }
 
         // Fallback: if backend didn't provide an id, open source URL if available
         if (url) {

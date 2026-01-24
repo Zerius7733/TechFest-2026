@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi import HTTPException
 import psycopg
 
 from pathlib import Path
@@ -105,3 +106,40 @@ def search(
         })
 
     return {"query": q, "count": len(results), "results": results}
+
+@app.get("/api/jobs/{job_id}")
+def get_job(job_id: int):
+    sql = """
+    SELECT
+      id, source, title, company, location, employment_type, salary, url,
+      COALESCE(description, '') as description
+    FROM jobs
+    WHERE id = %s
+    LIMIT 1;
+    """
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, [job_id])
+            row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return {
+        "id": row[0],
+        "source": row[1],
+        "title": row[2],
+        "company": row[3],
+        "location": row[4],
+        "employment_type": row[5],
+        "salary": row[6],
+        "url": row[7],
+        "description": row[8],
+    }
+
+
+@app.get("/job")
+def job_page():
+    return FileResponse(os.path.join(FRONTEND_DIR, "details.html"))
+
