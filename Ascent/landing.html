@@ -30,14 +30,15 @@
     }
 
     .hero {
-      width: min(760px, 92vw);
+      width: min(1000px, 92vw);
       transform: translateY(-8vh);
       text-align: center;
     }
 
     .title {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       font-size: clamp(34px, 5.2vw, 90px);
-      font-weight: 400;
+      font-weight: 500;
       letter-spacing: -0.02em;
       margin: 0 0 18px 0;
     }
@@ -250,15 +251,15 @@
 <body>
   <main class="wrap">
     <section class="hero" aria-label="Landing">
-      <h1 class="title" id="heroTitle" data-text="find your dream job"></h1>
+      <h1 class="title" id="heroTitle" data-text="Find your dream job."></h1>
 
 
       <div class="click-catcher" id="catcher" tabindex="0" role="button" aria-label="Type your goal">
         <div class="prompt" aria-live="polite">
           <span class="typed" id="typed"></span>
-<span class="hint" id="hint-left"></span>
-<span class="cursor i-beam" aria-hidden="true"></span>
-<span class="hint" id="hint-right"></span>
+          <span class="hint" id="hint-left"></span>
+          <span class="cursor i-beam" aria-hidden="true"></span>
+          <span class="hint" id="hint-right"></span>
 
         </div>
       </div>
@@ -308,32 +309,32 @@
 
     setActiveTab();
     // Hint typing animation (runs after title finishes)
-const HINT_LEFT_TEXT = "e.g.";
-const HINT_RIGHT_TEXT = " engineer";
-const HINT_SPEED = 60;
+    const HINT_LEFT_TEXT = "e.g.";
+    const HINT_RIGHT_TEXT = " engineer ";
+    const HINT_SPEED = 60;
 
-let hintLIndex = 0;
-let hintRIndex = 0;
+    let hintLIndex = 0;
+    let hintRIndex = 0;
 
-function typeHint() {
-  // Type left part first: "e.g."
-  if (hintLIndex < HINT_LEFT_TEXT.length) {
-    hintLeft.textContent += HINT_LEFT_TEXT[hintLIndex++];
-    updateCursorLeft();
-    setTimeout(typeHint, HINT_SPEED);
-    return;
-  }
+    function typeHint() {
+      // Type left part first: "e.g."
+      if (hintLIndex < HINT_LEFT_TEXT.length) {
+        hintLeft.textContent += HINT_LEFT_TEXT[hintLIndex++];
+        updateCursorLeft();
+        setTimeout(typeHint, HINT_SPEED);
+        return;
+      }
 
-  // Then type right part: " engineer"
-  if (hintRIndex < HINT_RIGHT_TEXT.length) {
-    hintRight.textContent += HINT_RIGHT_TEXT[hintRIndex++];
-    updateCursorLeft();
-    setTimeout(typeHint, HINT_SPEED);
-    return;
-  }
+      // Then type right part: " engineer"
+      if (hintRIndex < HINT_RIGHT_TEXT.length) {
+        hintRight.textContent += HINT_RIGHT_TEXT[hintRIndex++];
+        updateCursorLeft();
+        setTimeout(typeHint, HINT_SPEED);
+        return;
+      }
 
-  // Done typing hint
-}
+      // Done typing hint
+    }
 
     function revealHint() {
       // Show both hint parts after title finishes
@@ -363,13 +364,13 @@ function typeHint() {
       let i = 0;
 
       function tick() {
-if (i >= fullText.length) {
-  // Start hint typing after title finishes
-revealHint();
-setTimeout(typeHint, 200);
+        if (i >= fullText.length) {
+          // Start hint typing after title finishes
+          revealHint();
+          setTimeout(typeHint, 200);
 
-  return;
-}
+          return;
+        }
 
 
         el.textContent += fullText[i];
@@ -463,9 +464,9 @@ setTimeout(typeHint, 200);
 
 
     realInput.addEventListener("input", () => {
-    // Stop hint typing if user starts typing
-hintLIndex = HINT_LEFT_TEXT.length;
-hintRIndex = HINT_RIGHT_TEXT.length;
+      // Stop hint typing if user starts typing
+      hintLIndex = HINT_LEFT_TEXT.length;
+      hintRIndex = HINT_RIGHT_TEXT.length;
       typedEl.textContent = realInput.value;
       const show = realInput.value.length === 0;
       hintLeft.style.display = show ? "inline" : "none";
