@@ -612,14 +612,16 @@
       async function fetchAndRender(filterKey) {
         const key = filterKey || "for-you";
 
-        // optional cache so switching chips is instant
         if (CACHE.has(key)) {
-          renderResults(CACHE.get(key));
-          return;
+          const cached = CACHE.get(key);
+          renderResults(cached);
+          return cached;
         }
 
         const params = new URLSearchParams();
-        params.set("q", CURRENT_Q);
+        if (CURRENT_Q && CURRENT_Q.trim().length > 0) {
+          params.set("q", CURRENT_Q);
+        }
         params.set("limit", "20");
 
         // backend SQL filters
@@ -639,6 +641,7 @@
 
         CACHE.set(key, results);
         renderResults(results);
+        return results;
       }
 
       function initChips() {
@@ -750,8 +753,34 @@
         const grid = document.getElementById("grid");
 
         if (!q) {
-          sub.textContent = "No query provided";
-          grid.innerHTML = `<div class="empty">Type a search query from the home page.</div>`;
+          initChips();
+          initTopSearch();
+
+          // First try: no query (backend may support default listings)
+          CURRENT_Q = "";
+          CACHE.clear();
+          let results = await fetchAndRender("for-you");
+
+          // If backend returns nothing, fall back to a random “seed” query
+          if (!results || results.length === 0) {
+            const seeds = [
+              "software engineer",
+              "data analyst",
+              "intern",
+              "product",
+              "ui ux",
+              "cybersecurity",
+              "machine learning"
+            ];
+            CURRENT_Q = seeds[Math.floor(Math.random() * seeds.length)];
+
+            const input = document.getElementById("searchInput");
+            if (input) input.value = CURRENT_Q;
+
+            CACHE.clear();
+            await fetchAndRender("for-you");
+          }
+
           return;
         }
 
