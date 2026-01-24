@@ -19,6 +19,7 @@ app = FastAPI()
 
 # Serve your frontend folder
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Ascent"))
+print ("debug: FRONTEND_DIR path is:")
 print(FRONTEND_DIR)
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
 
