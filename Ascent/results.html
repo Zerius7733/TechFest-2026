@@ -496,7 +496,8 @@
 
       // Prefer going to your internal details page
       if (jobId) {
-        return `<a class="card-link" href="job?id=${encodeURIComponent(jobId)}">${content}</a>`;
+        return `<a class="card-link" href="/job?id=${encodeURIComponent(jobId)}&q=${encodeURIComponent(CURRENT_Q)}">${content}</a>`;
+
       }
 
         // Fallback: if backend didn't provide an id, open source URL if available
