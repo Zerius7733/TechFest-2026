@@ -1,426 +1,500 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Find your dream job</title>
-    <style>
-      :root {
-        --bg: #F4F6F5;
-        --text: #111111;
-        --muted: rgba(0, 0, 0, 0.35);
-        --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
-          "Segoe UI Emoji";
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Find your dream job</title>
+  <style>
+    :root {
+      --bg: #F4F6F5;
+      --text: #111111;
+      --muted: rgba(0, 0, 0, 0.35);
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+        "Segoe UI Emoji";
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    .wrap {
+      height: 100%;
+      display: grid;
+      place-items: center;
+    }
+
+    .hero {
+      width: min(760px, 92vw);
+      transform: translateY(-8vh);
+      text-align: center;
+    }
+
+    .title {
+      font-size: clamp(34px, 5.2vw, 90px);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      margin: 0 0 18px 0;
+    }
+
+    /* Clickable typing area (no visible box) */
+    .click-catcher {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 10px;
+    }
+
+    .click-catcher:focus-visible {
+      outline: 2px solid rgba(0, 0, 0, 0.2);
+      outline-offset: 6px;
+    }
+
+    .prompt {
+      display: inline-flex;
+      align-items: baseline;
+      justify-content: center;
+      text-align: center;
+      font-size: 28px;
+      line-height: 1.2;
+      min-height: 24px;
+      user-select: none;
+      position: relative;
+    }
+
+    .typed {
+      white-space: pre;
+      color: var(--text);
+    }
+
+    .hint {
+      white-space: pre;
+      color: var(--muted);
+      font-size: 28px;
+
+    }
+
+    .cursor {
+      display: inline-block;
+      color: var(--text);
+      animation: blink 1s steps(1, end) infinite;
+      position: absolute;
+      left: var(--cursor-left, 0px);
+      top: 50%;
+      transform: translateY(-50%);
+      width: auto;
+      pointer-events: none;
+
+    }
+
+    .cursor.i-beam {
+      width: 4px;
+      height: 1.2em;
+      background: var(--text);
+      border-radius: 1px;
+    }
+
+
+    @keyframes blink {
+
+      0%,
+      49% {
+        opacity: 1;
       }
 
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--font);
-      }
-
-      .wrap {
-        height: 100%;
-        display: grid;
-        place-items: center;
-      }
-
-      .hero {
-        width: min(760px, 92vw);
-        transform: translateY(-8vh);
-        text-align: center;
-      }
-
-      .title {
-        font-size: clamp(34px, 5.2vw, 90px);
-        font-weight: 400;
-        letter-spacing: -0.02em;
-        margin: 0 0 18px 0;
-      }
-
-      /* Clickable typing area (no visible box) */
-      .click-catcher {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 10px;
-      }
-
-      .click-catcher:focus-visible {
-        outline: 2px solid rgba(0, 0, 0, 0.2);
-        outline-offset: 6px;
-      }
-
-      .prompt {
-        display: inline-flex;
-        align-items: baseline;
-        justify-content: center;
-        text-align: center;
-        font-size: 28px;
-        line-height: 1.2;
-        min-height: 24px;
-        user-select: none;
-        position: relative;
-      }
-
-      .typed {
-        white-space: pre;
-        color: var(--text);
-      }
-
-      .hint {
-        white-space: pre;
-        color: var(--muted);
-        font-size: 28px;
-      }
-
-      .cursor {
-        display: inline-block;
-        color: var(--text);
-        animation: blink 1s steps(1, end) infinite;
-        position: absolute;
-        left: var(--cursor-left, 0px);
-        top: 50%;
-        transform: translateY(-50%);
-        width: auto;
-        pointer-events: none;
-
-      }
-
-      .cursor.i-beam {
-        width: 4px;
-        height: 1.2em;
-        background: var(--text);
-        border-radius: 1px;
-      }
-
-
-      @keyframes blink {
-        0%,
-        49% {
-          opacity: 1;
-        }
-        50%,
-        100% {
-          opacity: 0;
-        }
-      }
-
-      /* Hidden real input to capture typing */
-      .hidden-input {
-        position: absolute;
+      50%,
+      100% {
         opacity: 0;
-        pointer-events: none;
-        width: 1px;
-        height: 1px;
       }
+    }
 
-      /* Floating tab bar (centered pill) */
-      .tabbar {
-        position: fixed;
-        left: 50%;
-        bottom: 22px;
-        transform: translateX(-50%);
-        background: rgba(255, 255, 255, 0.72);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.10);
-        border-radius: 999px;
-        padding: 10px 14px;
-        display: flex;
-        gap: 10px;
-        z-index: 9999;
-      }
+    /* Hidden real input to capture typing */
+    .hidden-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px;
+      height: 1px;
+    }
 
-      .tabbar a {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        border-radius: 999px;
-        text-decoration: none;
-        color: rgba(0, 0, 0, 0.65);
-        font-size: 14px;
-        font-weight: 600;
-        line-height: 1;
-        user-select: none;
-      }
+    /* Floating tab bar (centered pill) */
+    .tabbar {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.10);
+      border-radius: 999px;
+      padding: 10px 14px;
+      display: flex;
+      gap: 10px;
+      z-index: 9999;
+    }
 
-      .tabbar a .icon {
-        width: 18px;
-        height: 18px;
-        display: inline-grid;
-        place-items: center;
-        font-size: 16px;
-      }
+    .tabbar a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      text-decoration: none;
+      color: rgba(0, 0, 0, 0.65);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1;
+      user-select: none;
+    }
 
-      .tabbar a.active {
-        background: #111;
-        color: #fff;
-      }
+    .tabbar a .icon {
+      width: 18px;
+      height: 18px;
+      display: inline-grid;
+      place-items: center;
+      font-size: 16px;
+    }
 
-      /* give landing content room above tabbar */
-      body {
-        padding-bottom: 120px;
-      }
+    .tabbar a.active {
+      background: #111;
+      color: #fff;
+    }
 
-      /* Auth modal */
-      .auth-modal {
-        position: fixed;
-        inset: 0;
-        display: none;
-        z-index: 10000;
-      }
+    /* give landing content room above tabbar */
+    body {
+      padding-bottom: 120px;
+    }
 
-      .auth-modal.open {
-        display: block;
-      }
+    /* Auth modal */
+    .auth-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 10000;
+    }
 
-      .auth-backdrop {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.35);
-      }
+    .auth-modal.open {
+      display: block;
+    }
 
-      .auth-card {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: min(420px, 92vw);
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.20);
-        border-radius: 18px;
-        padding: 18px;
-      }
+    .auth-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+    }
 
-      .auth-title {
-        margin: 0 0 8px 0;
-        font-size: 18px;
-        font-weight: 700;
-      }
+    .auth-card {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(420px, 92vw);
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.20);
+      border-radius: 18px;
+      padding: 18px;
+    }
 
-      .auth-text {
-        margin: 0 0 14px 0;
-        color: rgba(0, 0, 0, 0.65);
-        font-size: 14px;
-        line-height: 1.4;
-      }
+    .auth-title {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
 
-      .auth-actions {
-        display: flex;
-        gap: 10px;
-        justify-content: flex-end;
-        flex-wrap: wrap;
-      }
+    .auth-text {
+      margin: 0 0 14px 0;
+      color: rgba(0, 0, 0, 0.65);
+      font-size: 14px;
+      line-height: 1.4;
+    }
 
-      .auth-btn {
-        appearance: none;
-        border: 0;
-        border-radius: 999px;
-        padding: 10px 14px;
-        font-size: 14px;
-        font-weight: 700;
-        text-decoration: none;
-        cursor: pointer;
-      }
+    .auth-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
 
-      .auth-primary {
-        background: #111;
-        color: #fff;
-      }
+    .auth-btn {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
 
-      .auth-secondary {
-        background: rgba(0, 0, 0, 0.08);
-        color: rgba(0, 0, 0, 0.75);
-      }
+    .auth-primary {
+      background: #111;
+      color: #fff;
+    }
+
+    .auth-secondary {
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.75);
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <section class="hero" aria-label="Landing">
+      <h1 class="title" id="heroTitle" data-text="find your dream job"></h1>
 
 
+      <div class="click-catcher" id="catcher" tabindex="0" role="button" aria-label="Type your goal">
+        <div class="prompt" aria-live="polite">
+          <span class="typed" id="typed"></span>
+<span class="hint" id="hint-left"></span>
+<span class="cursor i-beam" aria-hidden="true"></span>
+<span class="hint" id="hint-right"></span>
 
-    </style>
-  </head>
-  <body>
-    <main class="wrap">
-      <section class="hero" aria-label="Landing">
-        <h1 class="title">find your dream job</h1>
-
-        <div class="click-catcher" id="catcher" tabindex="0" role="button" aria-label="Type your goal">
-          <div class="prompt" aria-live="polite">
-            <span class="typed" id="typed"></span>
-            <span class="hint" id="hint-left">e.g.</span>
-          <span class="cursor i-beam" aria-hidden="true"></span>
-            <span class="hint" id="hint-right"> engineer </span>
-          </div>
-        </div>
-
-        <input
-          id="realInput"
-          class="hidden-input"
-          type="text"
-          autocomplete="off"
-          autocapitalize="off"
-          autocorrect="off"
-          spellcheck="false"
-        />
-      </section>
-    </main>
-
-    <!-- Floating Tab Bar -->
-    <nav class="tabbar" aria-label="Primary">
-      <a href="/" data-tab="home">
-        <span class="icon">⌂</span>
-        <span>Home</span>
-      </a>
-      <a href="/results" data-tab="jobs">
-        <span class="icon">▦</span>
-        <span>Job Listings</span>
-      </a>
-      <a href="/job" data-tab="profile">
-        <span class="icon">👤</span>
-        <span>Profile</span>
-      </a>
-    </nav>
-
-    <!-- Auth Modal -->
-    <div class="auth-modal" id="authModal" aria-hidden="true">
-      <div class="auth-backdrop" data-close="1"></div>
-      <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-        <h2 id="authTitle" class="auth-title">Login required</h2>
-        <p class="auth-text">Please log in or sign up to access this section.</p>
-        <div class="auth-actions">
-          <button type="button" class="auth-btn auth-secondary" id="authCloseBtn">Cancel</button>
-          <a class="auth-btn auth-primary" id="authLoginBtn" href="/login">Log in</a>
-          <a class="auth-btn auth-primary" id="authSignupBtn" href="/signup">Sign up</a>
         </div>
       </div>
+
+      <input id="realInput" class="hidden-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
+        spellcheck="false" />
+    </section>
+  </main>
+
+  <!-- Floating Tab Bar -->
+  <nav class="tabbar" aria-label="Primary">
+    <a href="/" data-tab="home">
+      <span class="icon">⌂</span>
+      <span>Home</span>
+    </a>
+    <a href="/results" data-tab="jobs">
+      <span class="icon">▦</span>
+      <span>Job Listings</span>
+    </a>
+    <a href="/job" data-tab="profile">
+      <span class="icon">👤</span>
+      <span>Profile</span>
+    </a>
+  </nav>
+
+  <!-- Auth Modal -->
+  <div class="auth-modal" id="authModal" aria-hidden="true">
+    <div class="auth-backdrop" data-close="1"></div>
+    <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <h2 id="authTitle" class="auth-title">Login required</h2>
+      <p class="auth-text">Please log in or sign up to access this section.</p>
+      <div class="auth-actions">
+        <button type="button" class="auth-btn auth-secondary" id="authCloseBtn">Cancel</button>
+        <a class="auth-btn auth-primary" id="authLoginBtn" href="/login">Log in</a>
+        <a class="auth-btn auth-primary" id="authSignupBtn" href="/signup">Sign up</a>
+      </div>
     </div>
+  </div>
 
-    <script>
+  <script>
 
-      function setActiveTab() {
-        document.querySelectorAll(".tabbar a").forEach((a) => a.classList.remove("active"));
-        const home = document.querySelector('.tabbar a[data-tab="home"]');
-        if (home) home.classList.add("active");
+    function setActiveTab() {
+      document.querySelectorAll(".tabbar a").forEach((a) => a.classList.remove("active"));
+      const home = document.querySelector('.tabbar a[data-tab="home"]');
+      if (home) home.classList.add("active");
+    }
+
+    setActiveTab();
+    // Hint typing animation (runs after title finishes)
+const HINT_LEFT_TEXT = "e.g.";
+const HINT_RIGHT_TEXT = " engineer";
+const HINT_SPEED = 60;
+
+let hintLIndex = 0;
+let hintRIndex = 0;
+
+function typeHint() {
+  // Type left part first: "e.g."
+  if (hintLIndex < HINT_LEFT_TEXT.length) {
+    hintLeft.textContent += HINT_LEFT_TEXT[hintLIndex++];
+    updateCursorLeft();
+    setTimeout(typeHint, HINT_SPEED);
+    return;
+  }
+
+  // Then type right part: " engineer"
+  if (hintRIndex < HINT_RIGHT_TEXT.length) {
+    hintRight.textContent += HINT_RIGHT_TEXT[hintRIndex++];
+    updateCursorLeft();
+    setTimeout(typeHint, HINT_SPEED);
+    return;
+  }
+
+  // Done typing hint
+}
+
+    function revealHint() {
+      // Show both hint parts after title finishes
+      hintLeft.style.opacity = "1";
+      hintLeft.style.transform = "translateY(0)";
+      hintRight.style.opacity = "1";
+      hintRight.style.transform = "translateY(0)";
+    }
+
+    // Typewriter animation for hero title
+    (function typeHeroTitle() {
+      const el = document.getElementById("heroTitle");
+      if (!el) return;
+
+      const fullText = el.dataset.text || "";
+      const typingSpeed = 70; // ms per character
+      const startDelay = 200; // ms before typing starts
+
+      // Respect reduced motion
+      const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduceMotion) {
+        el.textContent = fullText;
+        return;
       }
 
-      setActiveTab();
+      el.textContent = "";
+      let i = 0;
 
-      // Basic auth flag (placeholder for future real auth)
-      function isLoggedIn() {
-        return !!localStorage.getItem("AUTH_TOKEN");
+      function tick() {
+if (i >= fullText.length) {
+  // Start hint typing after title finishes
+revealHint();
+setTimeout(typeHint, 200);
+
+  return;
+}
+
+
+        el.textContent += fullText[i];
+        i += 1;
+        setTimeout(tick, typingSpeed);
       }
 
-      const authModal = document.getElementById("authModal");
-      const authCloseBtn = document.getElementById("authCloseBtn");
+      setTimeout(tick, startDelay);
+    })();
 
-      function openAuthModal() {
-        if (!authModal) return;
-        authModal.classList.add("open");
-        authModal.setAttribute("aria-hidden", "false");
+    // Basic auth flag (placeholder for future real auth)
+    function isLoggedIn() {
+      return !!localStorage.getItem("AUTH_TOKEN");
+    }
+
+    const authModal = document.getElementById("authModal");
+    const authCloseBtn = document.getElementById("authCloseBtn");
+
+    function openAuthModal() {
+      if (!authModal) return;
+      authModal.classList.add("open");
+      authModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeAuthModal() {
+      if (!authModal) return;
+      authModal.classList.remove("open");
+      authModal.setAttribute("aria-hidden", "true");
+    }
+
+    if (authCloseBtn) authCloseBtn.addEventListener("click", closeAuthModal);
+    document.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t && t.getAttribute && t.getAttribute("data-close") === "1") {
+        closeAuthModal();
       }
+    });
 
-      function closeAuthModal() {
-        if (!authModal) return;
-        authModal.classList.remove("open");
-        authModal.setAttribute("aria-hidden", "true");
-      }
+    // Guard tabs that should require auth
+    const authRequiredTabs = new Set(["profile"]);
 
-      if (authCloseBtn) authCloseBtn.addEventListener("click", closeAuthModal);
-      document.addEventListener("click", (e) => {
-        const t = e.target;
-        if (t && t.getAttribute && t.getAttribute("data-close") === "1") {
-          closeAuthModal();
-        }
-      });
+    document.querySelectorAll(".tabbar a").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        const tab = a.getAttribute("data-tab");
+        if (!tab) return;
 
-      // Guard tabs that should require auth
-      const authRequiredTabs = new Set(["profile"]);
-
-      document.querySelectorAll(".tabbar a").forEach((a) => {
-        a.addEventListener("click", (e) => {
-          const tab = a.getAttribute("data-tab");
-          if (!tab) return;
-
-          if (authRequiredTabs.has(tab) && !isLoggedIn()) {
-            e.preventDefault();
-            openAuthModal();
-          }
-        });
-      });
-
-
-      const catcher = document.getElementById("catcher");
-      const realInput = document.getElementById("realInput");
-      const typedEl = document.getElementById("typed");
-      const hintLeft = document.getElementById("hint-left");
-      const hintRight = document.getElementById("hint-right");
-      const cursorEl = document.querySelector(".cursor");
-      const promptEl = document.querySelector(".prompt");
-
-      function updateCursorLeft() {
-        // When typing, cursor should be after typed text.
-        // When empty, cursor should sit between hint-left and hint-right (after hint-left).
-        const typedWidth = typedEl.getBoundingClientRect().width;
-
-        let leftPx = 0;
-        if (realInput.value.length > 0) {
-          leftPx = typedWidth;
-        } else {
-          const hintLeftWidth = hintLeft.getBoundingClientRect().width;
-          const hintRightWidth = hintRight.getBoundingClientRect().width;
-          leftPx = typedWidth + hintLeftWidth + hintRightWidth;
-        }
-
-        promptEl.style.setProperty("--cursor-left", `${leftPx}px`);
-      }
-
-      function focusInput() {
-        realInput.focus();
-      }
-
-      catcher.addEventListener("click", focusInput);
-      catcher.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (authRequiredTabs.has(tab) && !isLoggedIn()) {
           e.preventDefault();
-          focusInput();
+          openAuthModal();
         }
       });
+    });
 
-      realInput.addEventListener("input", () => {
-        typedEl.textContent = realInput.value;
-        const show = realInput.value.length === 0;
-        hintLeft.style.display = show ? "inline" : "none";
-        hintRight.style.display = show ? "inline" : "none";
-        updateCursorLeft();
-      });
 
-      realInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          const value = realInput.value.trim();
-          if (!value) return;
-          window.location.href = `/results?q=${encodeURIComponent(value)}`;
-        } else if (e.key === "Escape") {
-          realInput.value = "";
-          typedEl.textContent = "";
-          hintLeft.style.display = "inline";
-          hintRight.style.display = "inline";
-          updateCursorLeft();
-        }
-      });
+    const catcher = document.getElementById("catcher");
+    const realInput = document.getElementById("realInput");
+    const typedEl = document.getElementById("typed");
+    const hintLeft = document.getElementById("hint-left");
+    const hintRight = document.getElementById("hint-right");
+    const cursorEl = document.querySelector(".cursor");
+    const promptEl = document.querySelector(".prompt");
 
-      window.addEventListener("load", () => {
+    function updateCursorLeft() {
+      // When typing, cursor should be after typed text.
+      // When empty, cursor should sit between hint-left and hint-right (after hint-left).
+      const typedWidth = typedEl.getBoundingClientRect().width;
+
+      let leftPx = 0;
+      if (realInput.value.length > 0) {
+        leftPx = typedWidth;
+      } else {
+        const hintLeftWidth = hintLeft.getBoundingClientRect().width;
+        const hintRightWidth = hintRight.getBoundingClientRect().width;
+        leftPx = typedWidth + hintLeftWidth + hintRightWidth;
+      }
+
+      promptEl.style.setProperty("--cursor-left", `${leftPx}px`);
+    }
+
+    function focusInput() {
+      realInput.focus();
+    }
+
+    catcher.addEventListener("click", focusInput);
+    catcher.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
         focusInput();
+      }
+    });
+
+
+    realInput.addEventListener("input", () => {
+    // Stop hint typing if user starts typing
+hintLIndex = HINT_LEFT_TEXT.length;
+hintRIndex = HINT_RIGHT_TEXT.length;
+      typedEl.textContent = realInput.value;
+      const show = realInput.value.length === 0;
+      hintLeft.style.display = show ? "inline" : "none";
+      hintRight.style.display = show ? "inline" : "none";
+      updateCursorLeft();
+    });
+
+    realInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const value = realInput.value.trim();
+        if (!value) return;
+        window.location.href = `/results?q=${encodeURIComponent(value)}`;
+      } else if (e.key === "Escape") {
+        realInput.value = "";
+        typedEl.textContent = "";
+        hintLeft.style.display = "inline";
+        hintRight.style.display = "inline";
         updateCursorLeft();
-      });
+      }
+    });
 
-      window.addEventListener("resize", updateCursorLeft);
+    window.addEventListener("load", () => {
+      focusInput();
+      updateCursorLeft();
+    });
 
-    </script>
-  </body>
+    window.addEventListener("resize", updateCursorLeft);
+
+  </script>
+</body>
+
 </html>
