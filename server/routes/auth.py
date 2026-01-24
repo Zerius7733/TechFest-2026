@@ -78,7 +78,17 @@ def login(req: LoginRequest):
 
         user_id, db_email, name, role, password_hash = row
 
-        if not password_hash or not pwd_context.verify(req.password, password_hash):
+        if not password_hash:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        ok = False
+        try:
+            ok = pwd_context.verify(req.password, password_hash)
+        except Exception:
+            # fallback: allow plaintext match for dev DB rows
+            ok = (req.password == password_hash)
+
+        if not ok:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
         token = create_access_token({"sub": str(user_id), "role": role})

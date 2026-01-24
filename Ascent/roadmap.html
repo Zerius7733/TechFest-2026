@@ -337,6 +337,58 @@
         cursor: pointer;
         font-weight: 750;
       }
+
+      /* Floating Tab Bar */
+      .tabbar {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        width: min(560px, calc(100vw - 28px));
+        padding: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.78);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        z-index: 999;
+      }
+
+      .tabbar a {
+        display: grid;
+        place-items: center;
+        gap: 2px;
+        padding: 8px 6px;
+        border-radius: 999px;
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 800;
+        font-size: 12px;
+        opacity: 0.65;
+      }
+
+      /* IMPORTANT: override any global .icon styles */
+      .tabbar a .icon {
+        width: auto;
+        height: auto;
+        font-size: 18px;
+        line-height: 1;
+      }
+
+      .tabbar a.active {
+        background: rgba(0, 0, 0, 0.08);
+        opacity: 1;
+      }
+
+      /* Prevent content being hidden behind tabbar */
+      .page {
+        padding-bottom: 96px;
+      }
+
     </style>
   </head>
   <body>
@@ -443,8 +495,54 @@
       </div>
     </div>
 
+      <!-- Floating Tab Bar -->
+      <nav class="tabbar" aria-label="Primary">
+        <a href="/" data-tab="home">
+          <span class="icon">🏠</span>
+          <span>Home</span>
+        </a>
+        <a href="/results" data-tab="jobs">
+          <span class="icon">💼</span>
+          <span>Listings</span>
+        </a>
+        <a href="/optimize" data-tab="optimize">
+          <span class="icon">📄</span>
+          <span>Optimize</span>
+        </a>
+        <a href="/student_profile" data-tab="profile" class="active">
+          <span class="icon">👤</span>
+          <span>Profile</span>
+        </a>
+      </nav>
+
+
     <script>
       const $ = (id) => document.getElementById(id);
+
+      function getQueryParam(name) {
+        const u = new URL(window.location.href);
+        return u.searchParams.get(name);
+      }
+
+      function safeJsonParse(raw, fallback) {
+        try {
+          return raw ? JSON.parse(raw) : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+
+      function upsertRoadmapRecord(record) {
+        const key = "ASCENT_ROADMAPS";
+        const list = safeJsonParse(localStorage.getItem(key), []);
+
+        const idx = list.findIndex((x) => String(x.job_id) === String(record.job_id));
+        if (idx >= 0) list[idx] = { ...list[idx], ...record };
+        else list.unshift(record);
+
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
 
       function clamp(n, min, max) {
         return Math.max(min, Math.min(max, n));
@@ -559,8 +657,21 @@
       function render() {
         const data = loadRoadmapData();
 
+        // Use URL ?id=... as the primary key so profile can link back correctly
+        const jobId = getQueryParam("id") || data.job_id || data.id || data.jobId || Date.now().toString();
+        const company = data.company || data.company_name || "—";
+
         const jobTitle = data.job_title || data.final_recommendation?.target_role || "Target role";
         $("jobTitleBadge").textContent = jobTitle;
+
+        // Save a minimal record so Student Profile can show it in the Road Map table
+        upsertRoadmapRecord({
+          job_id: jobId,
+          company,
+          role: jobTitle,
+          created_at: new Date().toISOString(),
+        });
+
 
         const gap = data.gap || {};
         const matched = gap.matched_skills || [];

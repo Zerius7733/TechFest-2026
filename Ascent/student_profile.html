@@ -236,6 +236,49 @@
         grid-template-columns: 1fr;
       }
     }
+
+        /* Floating bottom tab bar */
+    .tabbar {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 14px;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+      z-index: 999;
+      backdrop-filter: blur(8px);
+    }
+
+    .tabbar a {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgba(0, 0, 0, 0.65);
+    }
+
+    .tabbar a .icon {
+      font-size: 16px;
+    }
+
+    .tabbar a.active {
+      background: rgba(0, 0, 0, 0.08);
+      color: #111;
+    }
+
+    .tabbar a:hover {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
   </style>
 </head>
 
@@ -245,8 +288,8 @@
     <aside>
       <div class="card profile-card">
         <div class="avatar">image to insert</div>
-        <h2 class="name" id="studentName">Guan Yibin</h2>
-        <p class="email" id="studentEmail">guan0094@e.ntu.edu.sg</p>
+        <h2 class="name" id="studentName">student name</h2>
+        <p class="email" id="studentEmail">techfest@e.ntu.edu.sg</p>
       </div>
 
       <div class="card about-card">
@@ -282,7 +325,7 @@
 
       <!-- Job Listing -->
       <section class="card section-card">
-        <div class="section-title">Job Listing</div>
+        <div class="section-title">Road Map</div>
 
         <div class="table" id="jobsTable">
           <div class="row header jobs">
@@ -297,12 +340,28 @@
   </div>
 
   <script>
-    const USER_ID = 1; // TEMP: replace after login (from token/session)
+
+    function getToken() {
+      return localStorage.getItem("AUTH_TOKEN") || "";
+    }
+
+    function authHeaders() {
+      const t = getToken();
+      return t ? { Authorization: `Bearer ${t}` } : {};
+    }
+
+
+    function authHeaders() {
+      const t = getToken();
+      return t ? { Authorization: `Bearer ${t}` } : {};
+    }
 
 
     async function loadStudentProfile() {
       try {
-        const res = await fetch(`/api/students/by_user/${USER_ID}`);
+        const res = await fetch(`/api/student_profiles/me`, {
+          headers: authHeaders(),
+        });
         if (!res.ok) throw new Error("Failed to load student profile");
 
         const s = await res.json();
@@ -316,8 +375,10 @@
         if (emailEl) emailEl.textContent = s.email || "—";
         if (uniEl) uniEl.textContent = s.university || "—";
         if (majorEl) majorEl.textContent = s.major || "—";
+        return s;
       } catch (err) {
         console.error(err);
+        return null;
       }
     }
 
@@ -337,6 +398,51 @@
       rows.slice(1).forEach((r) => r.remove());
     }
 
+    function safeJsonParse(raw, fallback) {
+      try {
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function loadRoadmapHistory() {
+      const table = document.getElementById("jobsTable");
+      if (!table) return;
+
+      clearDynamicRows(table);
+
+      const list = safeJsonParse(localStorage.getItem("ASCENT_ROADMAPS"), []);
+
+      if (!Array.isArray(list) || list.length === 0) {
+        const emptyRow = document.createElement("div");
+        emptyRow.className = "row jobs";
+        emptyRow.innerHTML = `
+          <div class="muted">—</div>
+          <div class="muted">No roadmaps generated yet</div>
+          <div class="muted">—</div>
+        `;
+        table.appendChild(emptyRow);
+        return;
+      }
+
+      list.forEach((rm) => {
+        const row = document.createElement("div");
+        row.className = "row jobs";
+
+        const jobId = rm.job_id ?? rm.id ?? rm.jobId;
+        const href = jobId ? `roadmap.html?id=${encodeURIComponent(jobId)}` : "roadmap.html";
+
+        row.innerHTML = `
+          <div>${rm.company ?? "—"}</div>
+          <div>${rm.role ?? "—"}</div>
+          <div><a class="btn-pill" href="${href}">View</a></div>
+        `;
+
+        table.appendChild(row);
+      });
+    }
+
     async function loadApplications() {
       const table = document.getElementById("statusTable");
       if (!table) return;
@@ -344,7 +450,10 @@
       clearDynamicRows(table);
 
       try {
-        const res = await fetch(`/api/applications/user/${USER_ID}`);
+        const me = await loadStudentProfile();
+        if (!me) throw new Error("Not logged in / profile not found");
+
+        const res = await fetch(`/api/applications/student/${encodeURIComponent(me.userId)}`);
         if (!res.ok) throw new Error("Failed to load applications");
         const data = await res.json();
 
@@ -382,57 +491,31 @@
       }
     }
 
-    async function loadJobListings() {
-      const table = document.getElementById("jobsTable");
-      if (!table) return;
+    loadStudentProfile().then(() => loadApplications());
+    loadRoadmapHistory();
 
-      clearDynamicRows(table);
-
-      try {
-        // Backend endpoint you implement
-        // Expected: [{ job_id, company, role }, ...]
-        const res = await fetch(`/api/jobs/recommended?user_id=${encodeURIComponent(USER_ID)}`);
-        if (!res.ok) throw new Error("Failed to load job listings");
-        const data = await res.json();
-
-        if (!Array.isArray(data) || data.length === 0) {
-          const emptyRow = document.createElement("div");
-          emptyRow.className = "row jobs";
-          emptyRow.innerHTML = `
-              <div class="muted">—</div>
-              <div class="muted">No jobs to show</div>
-              <div class="muted">—</div>
-            `;
-          table.appendChild(emptyRow);
-          return;
-        }
-
-        data.forEach((job) => {
-          const row = document.createElement("div");
-          row.className = "row jobs";
-
-          const jobId = job.job_id ?? job.id;
-          const roadmapHref = jobId ? `/roadmap?id=${encodeURIComponent(jobId)}` : "#";
-
-          row.innerHTML = `
-              <div>${job.company ?? "—"}</div>
-              <div>${job.role ?? job.title ?? "—"}</div>
-              <div>
-                <a class="btn-pill" href="${roadmapHref}">RoadMap</a>
-              </div>
-            `;
-
-          table.appendChild(row);
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    loadApplications();
-    loadStudentProfile();
-    loadJobListings();
   </script>
+
+    <!-- Floating Tab Bar -->
+  <nav class="tabbar" aria-label="Primary">
+    <a href="/" data-tab="home">
+      <span class="icon">🏠</span>
+      <span>Home</span>
+    </a>
+    <a href="/results" data-tab="jobs">
+      <span class="icon">💼</span>
+      <span>Listings</span>
+    </a>
+    <a href="/optimize" data-tab="optimize">
+      <span class="icon">📄</span>
+      <span>Optimize</span>
+    </a>
+    <a href="/student_profile" data-tab="profile" class="active">
+      <span class="icon">👤</span>
+      <span>Profile</span>
+    </a>
+  </nav>
+
 </body>
 
 </html>

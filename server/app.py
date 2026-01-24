@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import HTTPException
@@ -9,6 +9,7 @@ from fastapi import UploadFile, File, HTTPException
 from server.services.ocr_service import ocr_bytes
 from server.routes.resume import router as resume_router
 from server.routes.auth import router as auth_router
+from server.routes.roadmaps import router as roadmaps_router
 from server.db import db
 from pathlib import Path
 
@@ -30,6 +31,48 @@ app = FastAPI()
 
 app.include_router(resume_router)
 app.include_router(auth_router)
+app.include_router(roadmaps_router)
+
+from server.routes.auth import require_user_id
+
+@app.get("/api/student_profiles/me")
+def get_my_student_profile(authorization: str | None = Header(default=None)):
+    user_id = require_user_id(authorization)
+
+    sql = """
+    SELECT
+      u.id as user_id,
+      u.name,
+      u.email,
+      COALESCE(sp.university, '') as university,
+      COALESCE(sp.major, '') as major,
+      COALESCE(sp.avatar_url, '') as avatar_url
+    FROM users u
+    JOIN student_profiles sp ON sp.user_id = u.id
+    WHERE u.id = %s
+    LIMIT 1;
+    """
+
+    with db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, [user_id])
+            row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    return {
+        "userId": row[0],
+        "name": row[1],
+        "email": row[2],
+        "university": row[3],
+        "major": row[4],
+        "avatarUrl": row[5],
+    }
+
+
+from fastapi import Header
+from server.routes.auth import require_user_id
 
 
 @app.post("/api/resume/ocr")
@@ -191,41 +234,6 @@ def get_job(job_id: int):
         "description": row[8],
     }
 
-@app.get("/api/students/{student_id}")
-def get_student_profile(student_id: int):
-    sql = """
-    SELECT
-      s.id as student_id,
-      u.id as user_id,
-      u.name,
-      u.email,
-      COALESCE(s.university, '') as university,
-      COALESCE(s.major, '') as major,
-      COALESCE(s.avatar_url, '') as avatar_url
-    FROM students s
-    JOIN users u ON u.id = s.user_id
-    WHERE s.id = %s
-    LIMIT 1;
-    """
-
-    with psycopg.connect(DATABASE_URL) as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, [student_id])
-            row = cur.fetchone()
-
-    if not row:
-        raise HTTPException(status_code=404, detail="Student not found")
-
-    return {
-        "studentId": row[0],
-        "userId": row[1],
-        "name": row[2],
-        "email": row[3],
-        "university": row[4],
-        "major": row[5],
-        "avatarUrl": row[6],
-    }
-
 
 
 @app.get("/api/applications/student/{student_id}")
@@ -316,3 +324,7 @@ def login_page():
 @app.get("/roadmap.html")
 def roadmap_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "roadmap.html"))
+
+@app.get("/student_profile")
+def student_profile_page():
+    return FileResponse(os.path.join(FRONTEND_DIR, "student_profile.html"))
