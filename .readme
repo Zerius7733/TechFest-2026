@@ -2,8 +2,7 @@
 
 ## Planning
 - grey out hint on landing page // DONE
-- font of landing 
-- middle bottom tab navigator (alt tab) // semi-DONE
+- middle bottom tab navigator (alt tab) // DONE
 - search bar on top right on results page // DONE
 - filtering feature // DONE
 - scrape icon image ( adding into db query func)
@@ -11,6 +10,7 @@
 - losen up the search results ( too tight )
 - employee side user , status check for applications
 - new user db (students and employees)
+- font of landing 
 
 
 ## listing html 
