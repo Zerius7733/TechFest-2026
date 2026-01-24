@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Job Details</title>
+    <style>
+      :root {
+        --bg: #f4f6f5;
+        --card: #ffffff;
+        --text: #111111;
+        --muted: rgba(0, 0, 0, 0.55);
+        --border: rgba(0, 0, 0, 0.06);
+        --shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+        --radius: 28px;
+
+        --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+      }
+
+      .wrap {
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 28px 16px;
+      }
+
+      .shell {
+        width: min(980px, 92vw);
+      }
+
+      .top-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 26px 28px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        align-items: center;
+      }
+
+      .identity {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        min-width: 0;
+      }
+
+      .logo {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.22);
+        flex: 0 0 auto;
+      }
+
+      .headings {
+        min-width: 0;
+      }
+
+      .company {
+        font-weight: 700;
+        font-size: 22px;
+        margin: 0 0 6px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .title {
+        font-weight: 800;
+        font-size: 34px;
+        margin: 0;
+        line-height: 1.12;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .salary {
+        font-weight: 700;
+        font-size: 18px;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      .details-card {
+        margin-top: 22px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 26px 28px;
+      }
+
+      .section-label {
+        font-weight: 800;
+        font-size: 22px;
+        margin: 0 0 6px 0;
+      }
+
+      .section-text {
+        margin: 0 0 18px 0;
+        color: var(--text);
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 14px 0 18px 0;
+      }
+
+      .pill {
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.03);
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.75);
+      }
+
+      .actions {
+        margin-top: 18px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border-radius: 999px;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .btn.primary {
+        border-color: rgba(0, 0, 0, 0.18);
+      }
+
+      .error {
+        margin-top: 12px;
+        font-size: 14px;
+        color: #b00020;
+      }
+
+      @media (max-width: 720px) {
+        .top-card {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+        .salary {
+          justify-self: start;
+        }
+        .title {
+          font-size: 28px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div class="shell">
+        <div class="top-card">
+          <div class="identity">
+            <div class="logo" aria-hidden="true"></div>
+            <div class="headings">
+              <p class="company" id="companyName">[Company Name]</p>
+              <h1 class="title" id="jobTitle">Job Title</h1>
+            </div>
+          </div>
+          <div class="salary" id="salaryText">$0 / month</div>
+        </div>
+
+        <div class="details-card">
+          <p class="section-label">Overview:</p>
+          <p class="section-text" id="overviewText" class="muted">Loading...</p>
+
+          <div class="meta-row" id="metaRow" style="display: none;"></div>
+
+          <p class="section-label">Description:</p>
+          <p class="section-text" id="descriptionText" class="muted">Loading...</p>
+
+          <div class="actions">
+            <a class="btn primary" id="applyLink" href="#" target="_blank" rel="noreferrer noopener"
+              >Apply</a
+            >
+            <a class="btn" href="results.html">Back to results</a>
+          </div>
+
+          <div class="error" id="errorBox" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function qs(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+      }
+
+      function setText(id, value, fallback = "") {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = value ?? fallback;
+      }
+
+      function showError(msg) {
+        const box = document.getElementById("errorBox");
+        if (!box) return;
+        box.style.display = "block";
+        box.textContent = msg;
+      }
+
+      function addPill(container, text) {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+        pill.textContent = text;
+        container.appendChild(pill);
+      }
+
+      async function loadJob() {
+        const jobId = qs("id");
+        if (!jobId) {
+          showError("Missing job id. Make sure results.html links to job.html?id=<JOB_ID>.");
+          return;
+        }
+
+        // Change this if your API base path differs
+        const endpoint = `/api/jobs/${encodeURIComponent(jobId)}`;
+
+        try {
+          const res = await fetch(endpoint, { method: "GET" });
+          if (!res.ok) {
+            throw new Error(`Failed to load job (${res.status}). Endpoint: ${endpoint}`);
+          }
+
+          const job = await res.json();
+
+          // Header (company + title come from the selected record in DB)
+          setText("companyName", job.company, "[Company Name]");
+          setText("jobTitle", job.title, "Job Title");
+
+          // Salary
+          const salary = job.salary && String(job.salary).trim() ? job.salary : "—";
+          setText("salaryText", salary);
+
+          // Overview (short summary)
+          // If you have a dedicated overview field, use it. Else derive from description.
+          const desc = job.description ? String(job.description) : "";
+          const overview =
+            job.overview ||
+            (desc.length > 180 ? desc.slice(0, 180).trim() + "..." : desc.trim()) ||
+            "—";
+          setText("overviewText", overview);
+
+          // Description
+          setText("descriptionText", desc.trim() || "—");
+
+          // Meta pills
+          const metaRow = document.getElementById("metaRow");
+          metaRow.innerHTML = "";
+          let hasMeta = false;
+
+          if (job.location) {
+            addPill(metaRow, job.location);
+            hasMeta = true;
+          }
+          if (job.locationType) {
+            addPill(metaRow, job.locationType);
+            hasMeta = true;
+          }
+          if (job.type) {
+            addPill(metaRow, job.type);
+            hasMeta = true;
+          }
+          if (job.startDate) {
+            addPill(metaRow, `Start: ${job.startDate}`);
+            hasMeta = true;
+          }
+
+          metaRow.style.display = hasMeta ? "flex" : "none";
+
+          // Apply link
+          const applyLink = document.getElementById("applyLink");
+          if (applyLink) {
+            if (job.url && String(job.url).trim()) {
+              applyLink.href = job.url;
+            } else {
+              applyLink.href = "#";
+              applyLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                showError("No application URL available for this job.");
+              });
+            }
+          }
+        } catch (err) {
+          showError(err.message || "Unknown error loading job.");
+          setText("overviewText", "—");
+          setText("descriptionText", "—");
+        }
+      }
+
+      loadJob();
+    </script>
+  </body>
+</html>
