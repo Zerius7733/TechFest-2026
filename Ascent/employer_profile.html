@@ -1,0 +1,480 @@
+<!-- employer_profile.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Employer Profile</title>
+    <style>
+      :root {
+        --bg: #f4f6f5;
+        --card: #ffffff;
+        --pill: #f1f1f1;
+        --text: #111;
+        --muted: rgba(0, 0, 0, 0.45);
+        --stroke: rgba(0, 0, 0, 0.18);
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        --radius-xl: 44px;
+        --radius-lg: 28px;
+        --radius-md: 18px;
+        --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        height: 100%;
+        margin: 0;
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .page { min-height: 100%; padding: 28px; }
+
+      .grid {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 28px;
+        align-items: start;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+      }
+
+      /* LEFT */
+      .profile-card { padding: 22px; }
+
+      .avatar {
+        width: 160px;
+        height: 160px;
+        border-radius: 999px;
+        background: #efefef;
+        display: grid;
+        place-items: center;
+        margin: 4px 0 16px;
+        color: rgba(0, 0, 0, 0.4);
+        font-size: 14px;
+      }
+
+      .name {
+        font-size: 28px;
+        line-height: 1.1;
+        margin: 0;
+        font-weight: 800;
+      }
+
+      .email {
+        margin: 8px 0 0;
+        color: rgba(0, 0, 0, 0.55);
+        font-weight: 600;
+      }
+
+      .about-card { margin-top: 18px; padding: 22px; }
+
+      .about-title {
+        margin: 0 0 16px;
+        text-align: center;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .about-row {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 12px;
+        align-items: center;
+        margin: 14px 0;
+        color: rgba(0, 0, 0, 0.78);
+        font-weight: 700;
+      }
+
+      .icon-box { width: 28px; height: 28px; display: grid; place-items: center; color: rgba(0, 0, 0, 0.7); }
+      .icon { width: 22px; height: 22px; display: block; }
+
+      /* NEW: Logout card styled like your screenshot */
+      .logout-card {
+        margin-top: 18px;
+        padding: 22px;
+        display: grid;
+        place-items: center;
+      }
+
+      .logout-btn {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        font-size: 18px;
+        font-weight: 900;
+        cursor: pointer;
+        padding: 10px 0;
+      }
+
+      .logout-card:active { transform: translateY(1px); }
+      .logout-card:hover { filter: brightness(0.985); }
+
+      /* RIGHT */
+      .status-card {
+        padding: 18px 18px 22px;
+        border-radius: var(--radius-xl);
+      }
+
+      .status-header {
+        text-align: center;
+        font-size: clamp(28px, 3.2vw, 42px);
+        font-weight: 950;
+        margin: 8px 0 14px;
+      }
+
+      .divider {
+        height: 1px;
+        background: rgba(0, 0, 0, 0.08);
+        margin: 0 8px 18px;
+      }
+
+      .row {
+        background: var(--pill);
+        border-radius: 999px;
+        padding: 14px 18px;
+        margin: 14px 10px;
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 0.9fr 120px;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .cell { font-weight: 800; }
+      .cell.muted { color: rgba(0, 0, 0, 0.7); font-weight: 800; }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.65);
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        font-weight: 900;
+        text-transform: capitalize;
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid var(--stroke);
+        background: #d9d9d9;
+        color: #111;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: transform 0.05s ease, filter 0.12s ease;
+      }
+
+      .btn:active { transform: translateY(1px); }
+      .btn:hover { filter: brightness(0.98); }
+
+      /* MODAL */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+      }
+
+      .overlay.open { display: flex; }
+
+      .modal {
+        width: min(520px, 92vw);
+        background: var(--card);
+        border-radius: 26px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+      }
+
+      .modal-head { padding: 18px 18px 12px; }
+      .modal-title { margin: 0; font-size: 22px; font-weight: 950; }
+      .modal-subtitle { margin: 8px 0 0; color: rgba(0, 0, 0, 0.6); font-weight: 650; }
+
+      .modal-body { padding: 16px 18px 18px; display: grid; gap: 12px; }
+
+      .choice-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 4px; }
+
+      .choice {
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 14px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        background: #f7f7f7;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .choice input { width: 18px; height: 18px; margin: 0; }
+      .choice strong { font-weight: 950; }
+
+      .modal-foot {
+        padding: 14px 18px 18px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+      }
+
+      .btn.secondary { background: #f2f2f2; }
+      .btn.primary { background: #d9d9d9; }
+
+      @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+      @media (max-width: 700px) {
+        .row { grid-template-columns: 1fr; border-radius: 24px; }
+        .btn { width: 100%; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <div class="grid">
+        <!-- LEFT COLUMN -->
+        <div>
+          <section class="card profile-card">
+            <div class="avatar">image to insert</div>
+            <h1 class="name">Test User</h1>
+            <p class="email">testmail@e.ntu.edu.sg</p>
+          </section>
+
+          <section class="card about-card">
+            <h2 class="about-title">About me</h2>
+
+            <div class="about-row">
+              <div class="icon-box" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M9 7V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M4 8h16a2 2 0 0 1 2 2v7a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-7a2 2 0 0 1 2-2Z"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                  <path d="M2 13h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </div>
+              <div>Title</div>
+            </div>
+
+            <div class="about-row">
+              <div class="icon-box" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 3 2 8l10 5 10-5-10-5Z"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M6 10v6c0 2 3 4 6 4s6-2 6-4v-6"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
+              <div>Company Name</div>
+            </div>
+          </section>
+
+          <!-- NEW: Logout card (matches your screenshot style) -->
+          <section class="card logout-card">
+            <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+          </section>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <section class="card status-card">
+          <div class="status-header">Application Status</div>
+          <div class="divider"></div>
+
+          <div class="row" data-app-id="1">
+            <div class="cell">Student Name</div>
+            <div class="cell muted">Role</div>
+            <div class="cell"><span class="status-pill" data-status>pending</span></div>
+            <button class="btn" data-edit type="button">Edit</button>
+          </div>
+
+          <div class="row" data-app-id="2">
+            <div class="cell">Student Name</div>
+            <div class="cell muted">Role</div>
+            <div class="cell"><span class="status-pill" data-status>pending</span></div>
+            <button class="btn" data-edit type="button">Edit</button>
+          </div>
+
+          <div class="row" data-app-id="3">
+            <div class="cell">Student Name</div>
+            <div class="cell muted">Role</div>
+            <div class="cell"><span class="status-pill" data-status>pending</span></div>
+            <button class="btn" data-edit type="button">Edit</button>
+          </div>
+
+          <div class="row" data-app-id="4">
+            <div class="cell">Student Name</div>
+            <div class="cell muted">Role</div>
+            <div class="cell"><span class="status-pill" data-status>pending</span></div>
+            <button class="btn" data-edit type="button">Edit</button>
+          </div>
+
+          <div class="row" data-app-id="5">
+            <div class="cell">Student Name</div>
+            <div class="cell muted">Role</div>
+            <div class="cell"><span class="status-pill" data-status>pending</span></div>
+            <button class="btn" data-edit type="button">Edit</button>
+          </div>
+
+          <div class="row" data-app-id="6">
+            <div class="cell">Student Name</div>
+            <div class="cell muted">Role</div>
+            <div class="cell"><span class="status-pill" data-status>pending</span></div>
+            <button class="btn" data-edit type="button">Edit</button>
+          </div>
+
+          <div class="row" data-app-id="7">
+            <div class="cell">Student Name</div>
+            <div class="cell muted">Role</div>
+            <div class="cell"><span class="status-pill" data-status>pending</span></div>
+            <button class="btn" data-edit type="button">Edit</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal">
+        <div class="modal-head">
+          <h3 class="modal-title" id="modalTitle">Update status</h3>
+          <p class="modal-subtitle" id="modalSubtitle">Choose one option.</p>
+        </div>
+
+        <div class="modal-body">
+          <div class="choice-grid">
+            <label class="choice">
+              <input type="radio" name="statusChoice" value="offer" />
+              <div><strong>Offer</strong></div>
+            </label>
+
+            <label class="choice">
+              <input type="radio" name="statusChoice" value="reject" />
+              <div><strong>Reject</strong></div>
+            </label>
+
+            <label class="choice">
+              <input type="radio" name="statusChoice" value="interview" />
+              <div><strong>Interview</strong></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-foot">
+          <button class="btn secondary" id="cancelBtn" type="button">Cancel</button>
+          <button class="btn primary" id="saveBtn" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const overlay = document.getElementById("overlay");
+      const cancelBtn = document.getElementById("cancelBtn");
+      const saveBtn = document.getElementById("saveBtn");
+      const modalSubtitle = document.getElementById("modalSubtitle");
+
+      let activeRow = null;
+
+      function openModal(row) {
+        activeRow = row;
+
+        const name = row.querySelector(".cell")?.textContent?.trim() || "Student";
+        const statusEl = row.querySelector("[data-status]");
+        const currentStatus = (statusEl?.textContent || "pending").trim().toLowerCase();
+
+        modalSubtitle.textContent = `Editing: ${name} (current: ${currentStatus})`;
+
+        const radios = document.querySelectorAll('input[name="statusChoice"]');
+        radios.forEach((r) => {
+          r.checked = r.value === currentStatus;
+        });
+
+        overlay.classList.add("open");
+      }
+
+      function closeModal() {
+        overlay.classList.remove("open");
+        activeRow = null;
+        document.querySelectorAll('input[name="statusChoice"]').forEach((r) => (r.checked = false));
+      }
+
+      function getSelectedStatus() {
+        const picked = document.querySelector('input[name="statusChoice"]:checked');
+        return picked ? picked.value : null;
+      }
+
+      document.querySelectorAll("[data-edit]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest(".row");
+          if (!row) return;
+          openModal(row);
+        });
+      });
+
+      saveBtn.addEventListener("click", () => {
+        if (!activeRow) return;
+
+        const nextStatus = getSelectedStatus();
+        if (!nextStatus) {
+          modalSubtitle.textContent = "Please choose Offer, Reject, or Interview.";
+          return;
+        }
+
+        const statusEl = activeRow.querySelector("[data-status]");
+        if (statusEl) statusEl.textContent = nextStatus;
+
+        closeModal();
+      });
+
+      cancelBtn.addEventListener("click", closeModal);
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) closeModal();
+      });
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && overlay.classList.contains("open")) closeModal();
+      });
+
+      // Logout behavior (adjust redirect as needed)
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = "landing.html";
+        });
+      }
+    </script>
+  </body>
+</html>
