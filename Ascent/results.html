@@ -1,247 +1,389 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Results</title>
+    <style>
+      :root {
+        --bg: #f4f6f5;
+        --text: #111111;
+        --muted: rgba(0, 0, 0, 0.45);
+        --card: #ffffff;
+        --line: rgba(0, 0, 0, 0.08);
+        --chip: rgba(0, 0, 0, 0.06);
+        --font:
+          ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial;
+      }
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Results</title>
-  <style>
-    :root {
-      --bg: #F4F6F5;
-      --text: #111111;
-      --muted: rgba(0, 0, 0, 0.45);
-      --card: #ffffff;
-      --line: rgba(0, 0, 0, 0.08);
-      --chip: rgba(0, 0, 0, 0.06);
-      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-    }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+      }
 
-    html,
-    body {
-      margin: 0;
-      min-height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font);
-    }
+      .page {
+        max-width: 820px;
+        margin: 0 auto;
+        padding: 28px 16px 60px;
+      }
 
-    .page {
-      max-width: 820px;
-      margin: 0 auto;
-      padding: 28px 16px 60px;
-    }
+      .search-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        margin: 10px 0 6px;
+      }
 
-    .topbar {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-    .title {
-      font-size: 34px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      margin: 0;
-    }
+      .search-input {
+        width: min(520px, 72vw);
+        height: 44px;
+        border: none;
+        background: transparent;
+        padding: 0 6px;
+        font-size: 20px;
+        outline: none;
+        color: var(--text);
+      }
 
-    .sub {
-      color: var(--muted);
-      font-size: 14px;
-    }
+      .search-input:focus {
+        border-color: rgba(0, 0, 0, 0.18);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+      }
 
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 14px 0 18px;
-    }
+      .search-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: none;
+        background: transparent;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
 
-    .chip {
-      padding: 10px 14px;
-      border-radius: 999px;
-      background: var(--chip);
-      font-size: 14px;
-      color: rgba(0, 0, 0, 0.65);
-      user-select: none;
-    }
+      .search-icon {
+        font-size: 18px;
+        line-height: 1;
+        color: rgba(0, 0, 0, 0.75);
+        transform: translateY(-1px);
+      }
 
-    .chip.active {
-      background: #111;
-      color: #fff;
-    }
+      @media (max-width: 520px) {
+        .search-input {
+          width: 0;
+          opacity: 0;
+          pointer-events: none;
+          transition: width 180ms ease, opacity 180ms ease;
+        }
 
-    .grid {
-      display: grid;
-      gap: 16px;
-    }
+        .search.open .search-input {
+          width: 72vw;
+          opacity: 1;
+          pointer-events: auto;
+        }
+      }
 
-    .card {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 18px 18px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-      border: 1px solid rgba(0, 0, 0, 0.04);
-    }
 
-    .card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
 
-    .meta {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
+      .title {
+        font-size: 34px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin: 0;
+      }
 
-    .logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 999px;
-      background: rgba(0, 0, 0, 0.08);
-      flex: 0 0 auto;
-    }
+      .sub {
+        color: var(--muted);
+        font-size: 14px;
+      }
 
-    .meta-text {
-      min-width: 0;
-    }
+      .sub-inline {
+        flex-direction: row-reverse;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-left: auto;
+        text-align: right;
+        white-space: nowrap;
+      }
 
-    .company {
-      font-size: 14px;
-      font-weight: 600;
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
 
-    .location {
-      font-size: 13px;
-      color: var(--muted);
-      margin: 2px 0 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .sub-search-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+      }
 
-    .save {
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      border: 1px solid var(--line);
-      background: #fff;
-      cursor: pointer;
-    }
 
-    .job-title {
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin: 0 0 10px;
-    }
+      .sub-search-btn span {
+        font-size: 20px;
+        color: rgba(0, 0, 0, 0.7);
+        transform: translateY(-1px);
+      }
 
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
+      .sub-form {
+        display: inline;
+      }
 
-    .divider {
-      height: 1px;
-      background: var(--line);
-      margin: 12px 0;
-    }
+      .sub-q {
+        font: inherit;
+        color: var(--muted);
+        border: none;
+        background: transparent;
+        padding: 0;
+        width: 220px;
+        outline: none;
+        text-align: right;
+        width: 180px;
+      }
 
-    .bottom {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 14px;
-    }
+      .sub-q:focus {
+        color: var(--text);
+      }
 
-    .source {
-      font-size: 13px;
-      color: var(--muted);
-    }
+      /* make it feel clickable even before focus */
+      .sub-q:hover {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
 
-    .salary {
-      font-size: 16px;
-      font-weight: 700;
-      text-align: right;
-    }
+      @media (max-width: 520px) {
+        .sub-q {
+          width: 140px;
+        }
+      }
 
-    .salary small {
-      display: block;
-      font-weight: 600;
-      color: var(--muted);
-      margin-top: 2px;
-    }
 
-    .empty {
-      padding: 28px;
-      color: var(--muted);
-      text-align: center;
-    }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 14px 0 18px;
+      }
 
-    a.card-link {
-      color: inherit;
-      text-decoration: none;
-      display: block;
-    }
-  </style>
-</head>
+      .chip {
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: var(--chip);
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.65);
+        user-select: none;
+      }
 
-<body>
-  <div class="page">
-    <div class="topbar">
-      <h1 class="title">Results</h1>
-      <div class="sub" id="subText"></div>
+      .chip.active {
+        background: #111;
+        color: #fff;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: 20px;
+        padding: 18px 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+      }
+
+      .card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.08);
+        flex: 0 0 auto;
+      }
+
+      .meta-text {
+        min-width: 0;
+      }
+
+      .company {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .location {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 2px 0 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .save {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .job-title {
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0 0 10px;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+
+      .divider {
+        height: 1px;
+        background: var(--line);
+        margin: 12px 0;
+      }
+
+      .bottom {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .source {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .salary {
+        font-size: 16px;
+        font-weight: 700;
+        text-align: right;
+      }
+
+      .salary small {
+        display: block;
+        font-weight: 600;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+
+      .empty {
+        padding: 28px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      a.card-link {
+        color: inherit;
+        text-decoration: none;
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <div class="topbar">
+        <h1 class="title">Results</h1>
+        <div class="sub sub-inline" id="subTextWrap">
+          <button class="sub-search-btn" id="subSearchBtn" type="button" aria-label="Search">
+            <span aria-hidden="true">⌕</span>
+          </button>
+          <form id="searchForm" class="sub-form" autocomplete="off">
+            <input
+              id="searchInput"
+              class="sub-q"
+              type="text"
+              name="q"
+              aria-label="Search query"
+            />
+          </form>
+        </div>
+      </div>
+
+      <div class="chips" id="chips">
+        <div class="chip active" data-filter="for-you">For You</div>
+        <div class="chip" data-filter="full-time">Full-Time</div>
+        <div class="chip" data-filter="internship">Internship</div>
+      </div>
+
+      <div class="grid" id="grid"></div>
     </div>
 
-    <div class="chips" id="chips">
-      <div class="chip active" data-filter="for-you">For You</div>
-      <div class="chip" data-filter="full-time">Full-Time</div>
-      <div class="chip" data-filter="internship">Internship</div>
-    </div>
+    <script>
+      function qs(name) {
+        return new URLSearchParams(window.location.search).get(name) || "";
+      }
 
-    <div class="grid" id="grid"></div>
-  </div>
+      function esc(s) {
+        return (s ?? "").toString();
+      }
 
-  <script>
-    function qs(name) {
-      return new URLSearchParams(window.location.search).get(name) || "";
-    }
+      function card(job) {
+        const title = esc(job.title) || "Untitled Role";
+        const company = esc(job.company) || "Unknown Company";
+        const location = esc(job.location) || "Unknown Location";
+        const type = esc(job.employment_type) || "—";
+        const salary = esc(job.salary) || "—";
+        const url = esc(job.url) || "";
+        const jobId = esc(job.id) || "";
 
-    function esc(s) {
-      return (s ?? "").toString();
-    }
+        const tags = [];
+        if (type !== "—") tags.push(type);
+        tags.push("—");
+        tags.push(location);
 
-    function card(job) {
-      const title = esc(job.title) || "Untitled Role";
-      const company = esc(job.company) || "Unknown Company";
-      const location = esc(job.location) || "Unknown Location";
-      const type = esc(job.employment_type) || "—";
-      const salary = esc(job.salary) || "—";
-      const url = esc(job.url) || "";
-      const jobId = esc(job.id) || "";
-
-      const tags = [];
-      if (type !== "—") tags.push(type);
-      tags.push("—");
-      tags.push(location);
-
-      const content = `
+        const content = `
           <div class="card">
             <div class="card-top">
               <div class="meta">
@@ -259,7 +401,7 @@
             <div class="job-title">${title}</div>
 
             <div class="tags">
-              ${tags.map(t => `<span>${t}</span>`).join("")}
+              ${tags.map((t) => `<span>${t}</span>`).join("")}
             </div>
 
             <div class="divider"></div>
@@ -274,108 +416,138 @@
           </div>
         `;
 
-      // Prefer going to your internal details page
-      if (jobId) {
-        return `<a class="card-link" href="job.html?id=${encodeURIComponent(jobId)}">${content}</a>`;
+        // Prefer going to your internal details page
+        if (jobId) {
+          return `<a class="card-link" href="job.html?id=${encodeURIComponent(jobId)}">${content}</a>`;
+        }
+
+        // Fallback: if backend didn't provide an id, open source URL if available
+        if (url) {
+          return `<a class="card-link" href="${url}" target="_blank" rel="noopener noreferrer">${content}</a>`;
+        }
+
+        return content;
       }
 
-      // Fallback: if backend didn't provide an id, open source URL if available
-      if (url) {
-        return `<a class="card-link" href="${url}" target="_blank" rel="noopener noreferrer">${content}</a>`;
+      let CURRENT_Q = "";
+      const CACHE = new Map();
+
+      function renderResults(results) {
+        const grid = document.getElementById("grid");
+        grid.innerHTML = results.length
+          ? results.map(card).join("")
+          : `<div class="empty">No matching jobs for this filter.</div>`;
       }
 
-      return content;
+      async function fetchAndRender(filterKey) {
+        const key = filterKey || "for-you";
 
-    }
+        // optional cache so switching chips is instant
+        if (CACHE.has(key)) {
+          renderResults(CACHE.get(key));
+          return;
+        }
 
-    let CURRENT_Q = "";
-    const CACHE = new Map();
+        const params = new URLSearchParams();
+        params.set("q", CURRENT_Q);
+        params.set("limit", "20");
 
-    function renderResults(results) {
-      const grid = document.getElementById("grid");
-      grid.innerHTML = results.length
-        ? results.map(card).join("")
-        : `<div class="empty">No matching jobs for this filter.</div>`;
-    }
+        // backend SQL filters
+        if (key === "remote" || key === "internship" || key === "full-time") {
+          params.set("filter", key);
+        }
 
-    async function fetchAndRender(filterKey) {
-      const key = filterKey || "for-you";
+        // "new" requires backend support (sort param). If you haven't added it yet,
+        // leave this out and it will behave like "for-you".
+        if (key === "new") {
+          params.set("sort", "new");
+        }
 
-      // optional cache so switching chips is instant
-      if (CACHE.has(key)) {
-        renderResults(CACHE.get(key));
-        return;
+        const res = await fetch(`/api/search?${params.toString()}`);
+        const data = await res.json();
+        const results = Array.isArray(data.results) ? data.results : [];
+
+        CACHE.set(key, results);
+        renderResults(results);
       }
 
-      const params = new URLSearchParams();
-      params.set("q", CURRENT_Q);
-      params.set("limit", "20");
+      function initChips() {
+        const chipsEl = document.getElementById("chips");
+        if (!chipsEl) return;
 
-      // backend SQL filters
-      if (key === "remote" || key === "internship" || key === "full-time") {
-        params.set("filter", key);
+        chipsEl.addEventListener("click", (e) => {
+          const chip = e.target.closest(".chip");
+          if (!chip) return;
+
+          // toggle active UI
+          chipsEl
+            .querySelectorAll(".chip")
+            .forEach((c) => c.classList.remove("active"));
+          chip.classList.add("active");
+
+          // apply filter
+          const key = chip.dataset.filter || "for-you";
+          CACHE.clear(); // remove this line if you want caching across chips
+          fetchAndRender(key);
+        });
       }
 
-      // "new" requires backend support (sort param). If you haven't added it yet,
-      // leave this out and it will behave like "for-you".
-      if (key === "new") {
-        params.set("sort", "new");
+      function initTopSearch() {
+        const form = document.getElementById("searchForm");
+        const input = document.getElementById("searchInput");
+        const iconBtn = document.getElementById("subSearchBtn");
+        if (!form || !input) return;
+
+        // Prefill with current query
+        input.value = CURRENT_Q || "";
+
+        // Make the “software” text easy to edit
+        input.addEventListener("focus", () => {
+          input.select();
+        });
+
+        // Submit search when user presses Enter in the query
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const value = (input.value || "").trim();
+          if (!value) return;
+          window.location.href = `/results?q=${encodeURIComponent(value)}`;
+        });
+
+        // Clicking the icon focuses the input
+        if (iconBtn) {
+          iconBtn.addEventListener("click", () => {
+            input.focus();
+          });
+        }
       }
 
-      const res = await fetch(`/api/search?${params.toString()}`);
-      const data = await res.json();
-      const results = Array.isArray(data.results) ? data.results : [];
 
-      CACHE.set(key, results);
-      renderResults(results);
-    }
+      async function main() {
+        const q = qs("q").trim();
+        const sub = document.getElementById("subText");
+        const grid = document.getElementById("grid");
 
+        if (!q) {
+          sub.textContent = "No query provided";
+          grid.innerHTML = `<div class="empty">Type a search query from the home page.</div>`;
+          return;
+        }
 
-    function initChips() {
-      const chipsEl = document.getElementById("chips");
-      if (!chipsEl) return;
+        initChips();
+        CURRENT_Q = q;
+        initTopSearch();
 
-      chipsEl.addEventListener("click", (e) => {
-        const chip = e.target.closest(".chip");
-        if (!chip) return;
+        CACHE.clear();
 
-        // toggle active UI
-        chipsEl.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
-        chip.classList.add("active");
+        await fetchAndRender("for-you");
+      }
 
-        // apply filter
-        const key = chip.dataset.filter || "for-you";
-        CACHE.clear(); // remove this line if you want caching across chips
-        fetchAndRender(key);
-
+      main().catch((e) => {
+        document.getElementById("grid").innerHTML =
+          `<div class="empty">Failed to load results.</div>`;
+        console.error(e);
       });
-    }
-
-
-    async function main() {
-      const q = qs("q").trim();
-      const sub = document.getElementById("subText");
-      const grid = document.getElementById("grid");
-
-      if (!q) {
-        sub.textContent = "No query provided";
-        grid.innerHTML = `<div class="empty">Type a search query from the home page.</div>`;
-        return;
-      }
-
-      sub.textContent = `Searching for: "${q}"`;
-      initChips();
-      CURRENT_Q = q;
-      CACHE.clear();
-
-      await fetchAndRender("for-you");
-    }
-
-    main().catch((e) => {
-      document.getElementById("grid").innerHTML = `<div class="empty">Failed to load results.</div>`;
-      console.error(e);
-    });
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>
