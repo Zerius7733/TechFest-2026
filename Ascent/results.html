@@ -26,6 +26,81 @@
         font-family: var(--font);
       }
 
+      /* Auth modal */
+      .auth-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        z-index: 10000;
+      }
+
+      .auth-modal.open {
+        display: block;
+      }
+
+      .auth-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+      }
+
+      .auth-card {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(420px, 92vw);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.20);
+        border-radius: 18px;
+        padding: 18px;
+      }
+
+      .auth-title {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .auth-text {
+        margin: 0 0 14px 0;
+        color: rgba(0, 0, 0, 0.65);
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .auth-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .auth-btn {
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .auth-primary {
+        background: #111;
+        color: #fff;
+      }
+
+      .auth-secondary {
+        background: rgba(0, 0, 0, 0.08);
+        color: rgba(0, 0, 0, 0.75);
+      }
+
+
       .page {
         max-width: 820px;
         margin: 0 auto;
@@ -436,6 +511,22 @@
         </a>
       </nav>
 
+      <!-- Auth Modal -->
+      <div class="auth-modal" id="authModal" aria-hidden="true">
+        <div class="auth-backdrop" data-close="1"></div>
+        <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+          <h2 id="authTitle" class="auth-title">Login required</h2>
+          <p class="auth-text">Please log in or sign up to access this section.</p>
+          <div class="auth-actions">
+            <button type="button" class="auth-btn auth-secondary" id="authCloseBtn">Cancel</button>
+            <a class="auth-btn auth-primary" id="authLoginBtn" href="/login">Log in</a>
+            <a class="auth-btn auth-primary" id="authSignupBtn" href="/signup">Sign up</a>
+          </div>
+        </div>
+      </div>
+
+
+
     </div>
 
     <script>
@@ -608,6 +699,49 @@
       }
 
       setActiveTab();
+
+      // Basic auth flag (placeholder for future real auth)
+      function isLoggedIn() {
+        return !!localStorage.getItem("AUTH_TOKEN");
+      }
+
+      const authModal = document.getElementById("authModal");
+      const authCloseBtn = document.getElementById("authCloseBtn");
+
+      function openAuthModal() {
+        if (!authModal) return;
+        authModal.classList.add("open");
+        authModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeAuthModal() {
+        if (!authModal) return;
+        authModal.classList.remove("open");
+        authModal.setAttribute("aria-hidden", "true");
+      }
+
+      if (authCloseBtn) authCloseBtn.addEventListener("click", closeAuthModal);
+      document.addEventListener("click", (e) => {
+        const t = e.target;
+        if (t && t.getAttribute && t.getAttribute("data-close") === "1") {
+          closeAuthModal();
+        }
+      });
+
+      // Guard tabs that should require auth (choose what you want)
+      const authRequiredTabs = new Set(["profile", "jobs"]);
+
+      document.querySelectorAll(".tabbar a").forEach((a) => {
+        a.addEventListener("click", (e) => {
+          const tab = a.getAttribute("data-tab");
+          if (!tab) return;
+
+          if (authRequiredTabs.has(tab) && !isLoggedIn()) {
+            e.preventDefault();
+            openAuthModal();
+          }
+        });
+      });
 
 
       async function main() {
