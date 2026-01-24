@@ -32,7 +32,12 @@ def results_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "results.html"))
 
 @app.get("/api/search")
-def search(q: str = Query(..., min_length=1), limit: int = 20, offset: int = 0):
+def search(
+    q: str = Query(..., min_length=1),
+    filter: str | None = None,
+    limit: int = 20,
+    offset: int = 0
+):
     """
     Full-text search using jobs.search_tsv (from earlier SQL).
     Falls back to ILIKE if search_tsv isn't populated.
@@ -41,28 +46,48 @@ def search(q: str = Query(..., min_length=1), limit: int = 20, offset: int = 0):
 
     sql = """
     SELECT
-      id, source, title, company, location, employment_type, salary, url,
-      COALESCE(description, '') as description
+    id, source, title, company, location, employment_type, salary, url,
+    COALESCE(description, '') as description
     FROM jobs
     WHERE
-      (search_tsv IS NOT NULL AND search_tsv @@ websearch_to_tsquery('english', %s))
-      OR
-      (search_tsv IS NULL AND (
+    (
+        (search_tsv IS NOT NULL AND search_tsv @@ websearch_to_tsquery('english', %s))
+        OR
+        (search_tsv IS NULL AND (
         COALESCE(title,'') ILIKE %s OR
         COALESCE(company,'') ILIKE %s OR
         COALESCE(description,'') ILIKE %s
-      ))
-    ORDER BY
-      CASE WHEN search_tsv IS NOT NULL THEN ts_rank(search_tsv, websearch_to_tsquery('english', %s)) END DESC NULLS LAST,
-      id DESC
-    LIMIT %s OFFSET %s;
+        ))
+    )
     """
 
     like = f"%{q}%"
 
+    filters_sql = ""
+    params = [q, like, like, like]
+
+    if filter == "internship":
+        filters_sql += " AND employment_norm = 'internship'"
+    elif filter == "full-time":
+        filters_sql += " AND employment_norm = 'full_time'"
+    elif filter == "remote":
+        filters_sql += " AND work_mode_norm = 'remote'"
+
+    order_sql = """
+    ORDER BY
+    CASE WHEN search_tsv IS NOT NULL THEN ts_rank(search_tsv, websearch_to_tsquery('english', %s)) END DESC NULLS LAST,
+    posted_days ASC NULLS LAST,
+    id DESC
+    LIMIT %s OFFSET %s;
+    """
+
+    final_sql = sql + filters_sql + order_sql
+    params += [q, limit, offset]
+
+
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
-            cur.execute(sql, (q, like, like, like, q, limit, offset))
+            cur.execute(final_sql, params)
             rows = cur.fetchall()
 
     results = []

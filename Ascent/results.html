@@ -206,12 +206,10 @@
         <div class="sub" id="subText"></div>
       </div>
 
-      <div class="chips">
-        <div class="chip active">For You</div>
-        <div class="chip">New</div>
-        <div class="chip">Full-Time</div>
-        <div class="chip">Remote</div>
-        <div class="chip">Internship</div>
+      <div class="chips" id="chips">
+        <div class="chip active" data-filter="for-you">For You</div>
+        <div class="chip" data-filter="full-time">Full-Time</div>
+        <div class="chip" data-filter="internship">Internship</div>
       </div>
 
       <div class="grid" id="grid"></div>
@@ -278,6 +276,70 @@
         return content;
       }
 
+      let CURRENT_Q = "";
+      const CACHE = new Map();
+
+      function renderResults(results) {
+        const grid = document.getElementById("grid");
+        grid.innerHTML = results.length
+          ? results.map(card).join("")
+          : `<div class="empty">No matching jobs for this filter.</div>`;
+      }
+
+      async function fetchAndRender(filterKey) {
+        const key = filterKey || "for-you";
+
+        // optional cache so switching chips is instant
+        if (CACHE.has(key)) {
+          renderResults(CACHE.get(key));
+          return;
+        }
+
+        const params = new URLSearchParams();
+        params.set("q", CURRENT_Q);
+        params.set("limit", "20");
+
+        // backend SQL filters
+        if (key === "remote" || key === "internship" || key === "full-time") {
+          params.set("filter", key);
+        }
+
+        // "new" requires backend support (sort param). If you haven't added it yet,
+        // leave this out and it will behave like "for-you".
+        if (key === "new") {
+          params.set("sort", "new");
+        }
+
+        const res = await fetch(`/api/search?${params.toString()}`);
+        const data = await res.json();
+        const results = Array.isArray(data.results) ? data.results : [];
+
+        CACHE.set(key, results);
+        renderResults(results);
+      }
+
+
+      function initChips() {
+        const chipsEl = document.getElementById("chips");
+        if (!chipsEl) return;
+
+        chipsEl.addEventListener("click", (e) => {
+          const chip = e.target.closest(".chip");
+          if (!chip) return;
+
+          // toggle active UI
+          chipsEl.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+          chip.classList.add("active");
+
+          // apply filter
+          const key = chip.dataset.filter || "for-you";
+          CACHE.clear(); // remove this line if you want caching across chips
+          fetchAndRender(key);
+
+        });
+      }
+
+
       async function main() {
         const q = qs("q").trim();
         const sub = document.getElementById("subText");
@@ -290,16 +352,11 @@
         }
 
         sub.textContent = `Searching for: "${q}"`;
+        initChips();
+        CURRENT_Q = q;
+        CACHE.clear();
 
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=20`);
-        const data = await res.json();
-
-        if (!data.results || data.results.length === 0) {
-          grid.innerHTML = `<div class="empty">No matching jobs found.</div>`;
-          return;
-        }
-
-        grid.innerHTML = data.results.map(card).join("");
+        await fetchAndRender("for-you");
       }
 
       main().catch((e) => {
@@ -309,3 +366,4 @@
     </script>
   </body>
 </html>
+      
