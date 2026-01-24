@@ -120,6 +120,9 @@
             color: var(--text);
             font-size: 18px;
             line-height: 1.55;
+            white-space: pre-wrap;
+            transition: max-height 0.25s ease;
+
         }
 
         .muted {
@@ -212,7 +215,9 @@
                 <div class="meta-row" id="metaRow" style="display: none;"></div>
 
                 <p class="section-label">Description:</p>
-                <p class="section-text" id="descriptionText" class="muted">Loading...</p>
+                <div class="section-text" id="descriptionText"></div>
+                <button class="btn" id="toggleDescBtn" style="display:none;">Show more</button>
+
 
                 <div class="actions">
                     <a class="btn primary" id="applyLink" href="#" target="_blank" rel="noreferrer noopener">Apply</a>
@@ -250,11 +255,14 @@
             pill.textContent = text;
             container.appendChild(pill);
         }
+        let FULL_DESCRIPTION = "";
+        let DESC_EXPANDED = false;
+        const DESC_PREVIEW_LEN = 600; // adjust to taste
 
         async function loadJob() {
             const jobId = qs("id");
             if (!jobId) {
-                showError("Missing job id. Make sure results.html links to job.html?id=<JOB_ID>.");
+                showError("Missing job id. Make sure results.html links to job?id=<JOB_ID>.");
                 return;
             }
 
@@ -287,7 +295,22 @@
                 setText("overviewText", overview);
 
                 // Description
-                setText("descriptionText", desc.trim() || "—");
+                // Description (with show more / less)
+                FULL_DESCRIPTION = desc.trim() || "—";
+
+                const descEl = document.getElementById("descriptionText");
+                const toggleBtn = document.getElementById("toggleDescBtn");
+
+                if (FULL_DESCRIPTION.length > DESC_PREVIEW_LEN) {
+                    DESC_EXPANDED = false;
+                    descEl.textContent = FULL_DESCRIPTION.slice(0, DESC_PREVIEW_LEN).trim() + "…";
+                    toggleBtn.style.display = "inline-flex";
+                    toggleBtn.textContent = "Show more";
+                } else {
+                    descEl.textContent = FULL_DESCRIPTION;
+                    toggleBtn.style.display = "none";
+                }
+
 
                 // Meta pills
                 const metaRow = document.getElementById("metaRow");
@@ -343,6 +366,23 @@
                     window.location.href = `/results?q=${encodeURIComponent(q)}`;
                 } else {
                     window.location.href = "/results";
+                }
+            });
+        }
+        const toggleBtn = document.getElementById("toggleDescBtn");
+        const descEl = document.getElementById("descriptionText");
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener("click", () => {
+                DESC_EXPANDED = !DESC_EXPANDED;
+
+                if (DESC_EXPANDED) {
+                    descEl.textContent = FULL_DESCRIPTION;
+                    toggleBtn.textContent = "Show less";
+                } else {
+                    descEl.textContent =
+                        FULL_DESCRIPTION.slice(0, DESC_PREVIEW_LEN).trim() + "…";
+                    toggleBtn.textContent = "Show more";
                 }
             });
         }

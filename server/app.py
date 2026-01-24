@@ -90,7 +90,7 @@ def search(
     sql = """
     SELECT
     id, source, title, company, location, employment_type, salary, url,
-    COALESCE(description, '') as description
+    COALESCE(description_clean, '') as description_clean
     FROM jobs
     WHERE
     (
@@ -99,7 +99,7 @@ def search(
         (search_tsv IS NULL AND (
         COALESCE(title,'') ILIKE %s OR
         COALESCE(company,'') ILIKE %s OR
-        COALESCE(description,'') ILIKE %s
+        COALESCE(description_clean,'') ILIKE %s
         ))
     )
     """
@@ -154,7 +154,7 @@ def get_job(job_id: int):
     sql = """
     SELECT
       id, source, title, company, location, employment_type, salary, url,
-      COALESCE(description, '') as description
+      COALESCE(description_clean, '') as description    
     FROM jobs
     WHERE id = %s
     LIMIT 1;
