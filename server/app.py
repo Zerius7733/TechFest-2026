@@ -5,7 +5,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import psycopg
 
-load_dotenv()
+from pathlib import Path
+
+ENV_PATH = Path(__file__).resolve().parents[1] / "job-db" / ".env"
+load_dotenv(dotenv_path=ENV_PATH)
+
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:

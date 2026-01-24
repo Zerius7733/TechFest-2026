@@ -2,3 +2,16 @@
 
 ## Planning
 - grey out hint on landing page
+- font of landing
+- middle bottom tab navigator (alt tab)
+- search bar on top right on results page
+- filtering feature
+- scrape icon image
+
+## listing html 
+- host internal job listing rather than 
+
+
+## stretch goal
+ - add image , into db.
+    - if image in db when employer registering. image will be appended to the listing
