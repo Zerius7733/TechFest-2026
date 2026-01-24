@@ -75,17 +75,44 @@
       }
 
       .pill {
-        width: min(560px, 92vw);
+        width: min(680px, 92vw);
         height: 160px;
         border-radius: var(--radius);
-        background: var(--card);
         border: 1px solid var(--border);
         box-shadow: var(--shadow);
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .half {
         display: grid;
         place-items: center;
+        font-weight: 900;
+        font-size: 34px;
         cursor: pointer;
         user-select: none;
+      }
+
+      .half.left {
+        background: #ffffff;
+      }
+
+      .half.right {
+        background: #a9a9a9;
+      }
+
+      .split {
         transition: transform 120ms ease, box-shadow 120ms ease;
+      }
+
+      .split:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.12);
+      }
+
+      .split:active {
+        transform: translateY(0px);
       }
 
       .pill:hover {
@@ -137,24 +164,15 @@
 
       <div class="center">
         <div class="stack">
-          <h1>Upload your resume</h1>
+          <h1>Resume.</h1>
 
-          <div class="pill" id="uploadPill" role="button" tabindex="0" aria-label="Upload your resume PDF">
-            <!-- Inline SVG icon: resume + check -->
-            <svg class="icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <rect x="16" y="10" width="26" height="36" rx="4" stroke="#111111" stroke-width="3" />
-              <line x1="22" y1="22" x2="36" y2="22" stroke="#111111" stroke-width="3" stroke-linecap="round" />
-              <line x1="22" y1="30" x2="36" y2="30" stroke="#111111" stroke-width="3" stroke-linecap="round" />
-              <line x1="22" y1="38" x2="32" y2="38" stroke="#111111" stroke-width="3" stroke-linecap="round" />
-              <circle cx="44.5" cy="41.5" r="10.5" stroke="#111111" stroke-width="3" />
-              <path
-                d="M39.5 41.5L43 45L50 38"
-                stroke="#111111"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+          <div class="pill split" role="group" aria-label="Resume options">
+            <div class="half left" id="uploadPill" role="button" tabindex="0" aria-label="Upload resume">
+              Upload
+            </div>
+            <div class="half right" id="useExistingPill" role="button" tabindex="0" aria-label="Use existing resume">
+              Use existing
+            </div>
           </div>
 
           <p class="hint">Click the card to select a file.</p>
@@ -249,8 +267,10 @@
 
           sessionStorage.setItem("SKILL_GAP_RESULT", JSON.stringify(data));
           sessionStorage.setItem("SKILL_GAP_JOB_ID", jobId);
+          localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(data));
+          window.location.href = "/roadmap.html";
+          return;
 
-          setStatus("Uploaded. Processing complete.");
           // Later: redirect to match page
           // window.location.href = `/match?id=${encodeURIComponent(jobId)}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
         } catch (err) {
@@ -271,6 +291,16 @@
       if (fileInput) {
         fileInput.addEventListener("change", uploadSelectedFile);
       }
+
+      const useExistingPill = document.getElementById("useExistingPill");
+
+      if (useExistingPill) {
+        useExistingPill.addEventListener("click", () => {
+          clearError();
+          showError("No resume has been uploaded yet. Please upload one first.");
+        });
+      }
+
     </script>
   </body>
 </html>

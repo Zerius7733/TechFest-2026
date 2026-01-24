@@ -4,11 +4,13 @@ from pydantic import BaseModel
 from server.services.skill_gap_service import analyze_skill_gap
 from server.services.ocr_service import ocr_bytes
 from server.services.jobs_service import get_job_by_id
+from server.services.career_suggest_service import career_suggest
+from server.services.critique_service import critique_review
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
 
 from pydantic import BaseModel
-from server.services.course_match_service import recommend_courses_from_missing_skills
+from server.services.course_match_services import recommend_courses_from_missing_skills
 
 
 class CourseRecRequest(BaseModel):
@@ -71,12 +73,43 @@ async def ocr_skill_gap(
             job_description=job["description"],
         )
 
+        # 1) semantic course lookup from missing skills
+        course_pack = recommend_courses_from_missing_skills(gap.get("missing_skills", []), top_k=10)
+        courses = course_pack.get("courses", [])
+
+        # 2) career assistant draft using gap + courses
+        draft = career_suggest(
+            gap=gap,
+            job_title=job["title"],
+            job_skills=gap.get("job_skills", []),
+            courses=courses,
+        )
+
+        # 3) critique verifier (approve or revise)
+        critique = critique_review(
+            gap=gap,
+            job_title=job["title"],
+            job_description=job["description"],
+            courses=courses,
+            draft=draft,
+        )
+
+        final_response = critique.get("final_response", draft)
+        verdict = critique.get("verdict", "revise")
+
+
         return {
             "job_id": job_id,
             "job_title": job["title"],
             "resume_chars": len(resume_text),
             "resume_text_preview": resume_text[:300],
             "gap": gap,
+            "courses": courses,
+            "career_draft": draft,
+            "verdict": verdict,
+            "final_recommendation": final_response,
+            "issues_found": critique.get("issues_found", []),
         }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM failed: {e}")

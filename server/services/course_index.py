@@ -133,11 +133,19 @@ def build_index(force_rebuild: bool = False) -> Dict[str, Any]:
     docs: List[str] = []
     metas: List[Dict[str, Any]] = []
 
+    seen_ids: dict[str, int] = {}
+
     for _, r in df.iterrows():
         row = r.to_dict()
-        course_id = str(row["coursereferencenumber"]).strip()
-        if not course_id:
+        base_id = str(row["coursereferencenumber"]).strip()
+        if not base_id:
             continue
+
+        # Ensure unique IDs for Chroma (CSV can contain duplicate reference numbers)
+        n = seen_ids.get(base_id, 0)
+        seen_ids[base_id] = n + 1
+        course_id = base_id if n == 0 else f"{base_id}#{n}"
+
 
         text = _make_course_text(row)
         if not text:
@@ -190,14 +198,20 @@ def query_courses(query_text: str, top_k: int = 8) -> List[Dict[str, Any]]:
     model = SentenceTransformer(MODEL_NAME)
     q_emb = model.encode([query_text], normalize_embeddings=True).tolist()[0]
 
-    res = col.query(query_embeddings=[q_emb], n_results=top_k, include=["metadatas", "distances"])
+    res = col.query(
+        query_embeddings=[q_emb],
+        n_results=top_k,
+        include=["metadatas", "distances", "documents"],
+    )
     metadatas = (res.get("metadatas") or [[]])[0]
     distances = (res.get("distances") or [[]])[0]
+    documents = (res.get("documents") or [[]])[0]
 
     out: List[Dict[str, Any]] = []
-    for m, d in zip(metadatas, distances):
+    for m, d, doc in zip(metadatas, distances, documents):
         item = dict(m)
         item["distance"] = float(d)
+        item["evidence"] = (doc or "")[:800]  # short snippet for prompting
         out.append(item)
     return out
 

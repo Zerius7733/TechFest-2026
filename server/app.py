@@ -188,3 +188,7 @@ def job_page():
 @app.get("/apply")
 def apply_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "apply.html"))
+
+@app.get("/roadmap.html")
+def roadmap_page():
+    return FileResponse(os.path.join(FRONTEND_DIR, "roadmap.html"))

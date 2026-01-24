@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roadmap</title>
+    <style>
+      :root {
+        --bg: #f4f6f5;
+        --card: #ffffff;
+        --text: #111111;
+        --muted: rgba(0, 0, 0, 0.55);
+        --border: rgba(0, 0, 0, 0.06);
+        --shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+        --radius: 28px;
+        --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+          "Segoe UI Emoji";
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+      }
+
+      .page {
+        min-height: 100%;
+        padding: 26px 20px 40px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .pill-btn {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(8px);
+        padding: 10px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-weight: 650;
+      }
+
+      .container {
+        width: min(1100px, 92vw);
+        margin: 0 auto;
+      }
+
+      .header {
+        margin: 18px 0 18px;
+      }
+
+      .kicker {
+        font-size: 13px;
+        color: var(--muted);
+        letter-spacing: 0.2px;
+      }
+
+      .title {
+        margin: 6px 0 0;
+        font-size: clamp(26px, 3.2vw, 44px);
+        line-height: 1.02;
+        letter-spacing: -0.02em;
+      }
+
+      .subtitle {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.35;
+        max-width: 70ch;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      @media (max-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .card h3 {
+        margin: 0;
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 650;
+      }
+
+      .card .big {
+        margin-top: 10px;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      /* Match card layout */
+      .match-wrap {
+        display: grid;
+        grid-template-columns: 170px 1fr;
+        gap: 16px;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      @media (max-width: 520px) {
+        .match-wrap {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .donut {
+        width: 160px;
+        height: 160px;
+        display: grid;
+        place-items: center;
+        margin: 0 auto;
+      }
+
+      .donut svg {
+        width: 160px;
+        height: 160px;
+        display: block;
+      }
+
+      .donut .center {
+        position: absolute;
+        text-align: center;
+      }
+
+      .donut-outer {
+        position: relative;
+        width: 160px;
+        height: 160px;
+      }
+
+      .donut .pct {
+        font-size: 26px;
+        font-weight: 850;
+        letter-spacing: -0.02em;
+      }
+
+      .donut .label {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 650;
+      }
+
+      .mini {
+        display: grid;
+        gap: 10px;
+      }
+
+      .mini-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      .mini-row strong {
+        font-size: 13px;
+      }
+
+      .badge {
+        font-size: 12px;
+        font-weight: 750;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      /* Skill chips */
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .chip {
+        font-size: 12px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.03);
+        font-weight: 650;
+        white-space: nowrap;
+      }
+
+      .chip.ok {
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      .chip.miss {
+        background: rgba(0, 0, 0, 0.06);
+      }
+
+      /* Timeline */
+      .timeline {
+        margin-top: 12px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 20px 1fr;
+        gap: 12px;
+        padding: 12px 12px;
+        border-radius: 18px;
+        border: 1px solid var(--border);
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.25);
+        margin-top: 4px;
+      }
+
+      .step-title {
+        font-weight: 800;
+        margin: 0;
+        font-size: 13px;
+      }
+
+      .step-desc {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+
+      /* Courses */
+      .courses {
+        margin-top: 12px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .course {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 12px 12px;
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      .course .name {
+        margin: 0;
+        font-weight: 850;
+        font-size: 13px;
+        line-height: 1.2;
+      }
+
+      .course .meta {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .course .why {
+        margin-top: 10px;
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+
+      .row2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .footer-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
+      .primary-btn {
+        border: 0;
+        background: #111;
+        color: #fff;
+        padding: 12px 14px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 750;
+      }
+
+      .ghost-btn {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.85);
+        padding: 12px 14px;
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 750;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="container">
+        <div class="topbar">
+          <button class="pill-btn" id="backBtn">Back</button>
+        </div>
+
+        <div class="header">
+          <div class="kicker">AI Roadmap</div>
+          <div class="title" id="pageTitle">Your progress plan</div>
+          <div class="subtitle" id="pageSubtitle">
+            A step-by-step roadmap based on your resume, the target job, and SkillsFuture course matches.
+          </div>
+        </div>
+
+        <div class="grid">
+          <!-- Left: Match + Skills -->
+          <div class="card">
+            <h3>Match Quality</h3>
+            <div class="match-wrap">
+              <div class="donut">
+                <div class="donut-outer">
+                  <svg viewBox="0 0 120 120" aria-hidden="true">
+                    <circle cx="60" cy="60" r="46" stroke="rgba(0,0,0,0.08)" stroke-width="12" fill="none"></circle>
+                    <circle
+                      id="donutProgress"
+                      cx="60"
+                      cy="60"
+                      r="46"
+                      stroke="rgba(0,0,0,0.85)"
+                      stroke-width="12"
+                      fill="none"
+                      stroke-linecap="round"
+                      stroke-dasharray="289"
+                      stroke-dashoffset="289"
+                      transform="rotate(-90 60 60)"
+                    ></circle>
+                  </svg>
+                  <div class="center" style="inset: 0; position: absolute; display: grid; place-items: center;">
+                    <div>
+                      <div class="pct" id="matchPct">--%</div>
+                      <div class="label" id="matchLabel">Match</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mini">
+                <div class="mini-row">
+                  <strong>Target role</strong>
+                  <span class="badge" id="jobTitleBadge">--</span>
+                </div>
+                <div class="mini-row">
+                  <strong>Matched skills</strong>
+                  <span class="badge" id="matchedCount">--</span>
+                </div>
+                <div class="mini-row">
+                  <strong>Missing skills</strong>
+                  <span class="badge" id="missingCount">--</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 18px; display: grid; gap: 10px;">
+              <h3>Missing skills to close next</h3>
+              <div class="chips" id="missingChips"></div>
+
+              <h3 style="margin-top: 8px;">Already strong</h3>
+              <div class="chips" id="matchedChips"></div>
+            </div>
+
+            <div class="footer-actions">
+              <button class="primary-btn" id="restartBtn">Upload another resume</button>
+              <button class="ghost-btn" id="viewJobBtn">View job details</button>
+            </div>
+          </div>
+
+          <!-- Right: Next steps -->
+          <div class="card">
+            <h3>Next Steps</h3>
+            <div class="big" id="nextStepsTitle">Your 7-day plan</div>
+            <div class="muted" id="nextStepsNote" style="margin-top: 8px; font-size: 13px; line-height: 1.35;">
+              Start with 2–3 missing skills, then back it up with a small project and updated resume bullets.
+            </div>
+
+            <div class="timeline" id="timeline">
+              <!-- injected -->
+            </div>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="card">
+            <h3>SkillsFuture course matches</h3>
+            <div class="muted" style="margin-top: 10px; font-size: 13px; line-height: 1.35;">
+              These are pulled via semantic matching against the course directory (ChromaDB), then selected by the assistant.
+            </div>
+
+            <div class="courses" id="coursesList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+      }
+
+      function setDonut(pct) {
+        const r = 46;
+        const circumference = 2 * Math.PI * r;
+        const p = clamp(Number(pct) || 0, 0, 100);
+        const offset = circumference * (1 - p / 100);
+        const c = $("donutProgress");
+        c.setAttribute("stroke-dasharray", String(circumference.toFixed(0)));
+        c.setAttribute("stroke-dashoffset", String(offset.toFixed(0)));
+      }
+
+      function chip(text, cls) {
+        const el = document.createElement("div");
+        el.className = "chip " + (cls || "");
+        el.textContent = text;
+        return el;
+      }
+
+      function step(title, desc) {
+        const wrap = document.createElement("div");
+        wrap.className = "step";
+        const dot = document.createElement("div");
+        dot.className = "dot";
+        const body = document.createElement("div");
+        const h = document.createElement("p");
+        h.className = "step-title";
+        h.textContent = title;
+        const p = document.createElement("p");
+        p.className = "step-desc";
+        p.textContent = desc;
+        body.appendChild(h);
+        body.appendChild(p);
+        wrap.appendChild(dot);
+        wrap.appendChild(body);
+        return wrap;
+      }
+
+      function courseCard(c) {
+        const wrap = document.createElement("div");
+        wrap.className = "course";
+
+        const name = document.createElement("p");
+        name.className = "name";
+        name.textContent = c.coursetitle || "Course";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const provider = document.createElement("span");
+        provider.textContent = "Provider: " + (c.trainingprovideralias || "-");
+
+        const hours = document.createElement("span");
+        hours.textContent = "Hours: " + (c.number_of_hours || "-");
+
+        const ref = document.createElement("span");
+        ref.textContent = "Ref: " + (c.coursereferencenumber || "-");
+
+        meta.appendChild(provider);
+        meta.appendChild(hours);
+        meta.appendChild(ref);
+
+        const why = document.createElement("div");
+        why.className = "why";
+        why.textContent = c.why || c.evidence || "Relevant to your missing skills.";
+
+        wrap.appendChild(name);
+        wrap.appendChild(meta);
+        wrap.appendChild(why);
+        return wrap;
+      }
+
+      function computeMatchPct(gap) {
+        const matched = (gap && gap.matched_skills) ? gap.matched_skills.length : 0;
+        const missing = (gap && gap.missing_skills) ? gap.missing_skills.length : 0;
+        const total = matched + missing;
+        if (!total) return 0;
+        return Math.round((matched / total) * 100);
+      }
+
+      function loadRoadmapData() {
+        // The upload page should do:
+        // localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(apiResponse))
+        // then redirect to roadmap.html
+        try {
+          const raw = localStorage.getItem("ASCENT_ROADMAP_DATA");
+          if (raw) return JSON.parse(raw);
+        } catch {}
+        // fallback demo
+        return {
+          job_title: "Software Engineer Intern",
+          gap: {
+            matched_skills: ["Python", "Java", "C++"],
+            missing_skills: ["HTML", "CSS", "JavaScript", "React", "SQL", "User Research"],
+          },
+          final_recommendation: {
+            skills_to_focus: ["HTML", "CSS", "JavaScript", "User Research"],
+            action_plan: [
+              "Enroll in one front-end course and one UX fundamentals course.",
+              "Build a small web app to prove HTML/CSS/JS skills.",
+              "Update resume bullets to reflect the project outcomes."
+            ],
+            recommended_courses: []
+          },
+          courses: []
+        };
+      }
+
+      function render() {
+        const data = loadRoadmapData();
+
+        const jobTitle = data.job_title || data.final_recommendation?.target_role || "Target role";
+        $("jobTitleBadge").textContent = jobTitle;
+
+        const gap = data.gap || {};
+        const matched = gap.matched_skills || [];
+        const missing = gap.missing_skills || [];
+
+        $("matchedCount").textContent = String(matched.length);
+        $("missingCount").textContent = String(missing.length);
+
+        const pct = computeMatchPct(gap);
+        $("matchPct").textContent = pct + "%";
+        setDonut(pct);
+
+        // Title
+        $("pageTitle").textContent = "Your roadmap for " + jobTitle;
+
+        // Chips
+        const missingWrap = $("missingChips");
+        const matchedWrap = $("matchedChips");
+        missingWrap.innerHTML = "";
+        matchedWrap.innerHTML = "";
+
+        (missing.slice(0, 14)).forEach((s) => missingWrap.appendChild(chip(s, "miss")));
+        (matched.slice(0, 14)).forEach((s) => matchedWrap.appendChild(chip(s, "ok")));
+
+        // Timeline
+        const tl = $("timeline");
+        tl.innerHTML = "";
+
+        const focus = data.final_recommendation?.skills_to_focus || missing.slice(0, 4);
+        const focusLine = focus.length ? ("Focus skills: " + focus.join(", ")) : "Focus on the top missing skills first.";
+
+        tl.appendChild(step("Step 1 — Pick 2–3 skills", focusLine));
+
+        tl.appendChild(
+          step(
+            "Step 2 — Take one course",
+            "Choose one SkillsFuture course below that directly targets your missing skills. Commit to finishing it this week."
+          )
+        );
+
+        tl.appendChild(
+          step(
+            "Step 3 — Build a proof project",
+            "Create a small project that uses the new skills (e.g., a responsive web page + simple JS interactions)."
+          )
+        );
+
+        tl.appendChild(
+          step(
+            "Step 4 — Update resume bullets",
+            "Rewrite 2–3 bullets to reflect measurable outcomes from your project and the skills you gained."
+          )
+        );
+
+        tl.appendChild(
+          step(
+            "Step 5 — Apply with confidence",
+            "Re-run this analysis after updates and track your match quality improvement."
+          )
+        );
+
+        // Courses
+        const coursesList = $("coursesList");
+        coursesList.innerHTML = "";
+
+        // Prefer curated courses from final recommendation if present
+        const curated = data.final_recommendation?.recommended_courses || [];
+        const retrieved = data.courses || [];
+
+        const list = curated.length ? curated : retrieved.slice(0, 6);
+
+        if (!list.length) {
+          const empty = document.createElement("div");
+          empty.className = "course";
+          empty.innerHTML =
+            "<p class='name'>No course matches found</p><div class='why'>Try broadening the missing skills query or lower the strong-match threshold.</div>";
+          coursesList.appendChild(empty);
+        } else {
+          list.slice(0, 8).forEach((c) => coursesList.appendChild(courseCard(c)));
+        }
+
+        // Buttons
+        $("backBtn").onclick = () => history.back();
+        $("restartBtn").onclick = () => (window.location.href = "apply.html");
+        $("viewJobBtn").onclick = () => (window.location.href = "details.html");
+      }
+
+      render();
+    </script>
+  </body>
+</html>
