@@ -1,8 +1,8 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!DOCTYPE html>
+<!-- saved from url=(0022)http://127.0.0.1:8000/ -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Find your dream job</title>
     <style>
       :root {
@@ -73,15 +73,15 @@
       .hint {
         white-space: pre;
         color: var(--muted);
-        font-size: 28px;
+        font-size: 25px;
       }
 
       .cursor {
         display: inline-block;
         color: var(--text);
         animation: blink 1s steps(1, end) infinite;
-        position: absolute;
-        left: var(--cursor-left, 0px);
+        position: relative;
+
         top: 50%;
         transform: translateY(-50%);
         width: auto;
@@ -96,7 +96,27 @@
         border-radius: 1px;
       }
 
+      /* Top & bottom caps */
+      .cursor.i-beam::before,
+      .cursor.i-beam::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        width: 10px;
+        height: 3px;
+        background: var(--text);
+        border-radius: 999px;
+        transform: translateX(-50%);
+      }
 
+      /* CONNECTED — no gaps */
+      .cursor.i-beam::before {
+        top: 0;
+      }
+
+      .cursor.i-beam::after {
+        bottom: 0;
+      }
 
 
       @keyframes blink {
@@ -126,23 +146,15 @@
         <h1 class="title">find your dream job</h1>
 
         <div class="click-catcher" id="catcher" tabindex="0" role="button" aria-label="Type your goal">
-          <div class="prompt" aria-live="polite">
+          <div class="prompt" aria-live="polite" style="--cursor-left: 38.1015625px;">
             <span class="typed" id="typed"></span>
             <span class="hint" id="hint-left">e.g.</span>
           <span class="cursor i-beam" aria-hidden="true"></span>
-            <span class="hint" id="hint-right"> engineer </span>
+            <span class="hint" id="hint-right"> engineer</span>
           </div>
         </div>
 
-        <input
-          id="realInput"
-          class="hidden-input"
-          type="text"
-          autocomplete="off"
-          autocapitalize="off"
-          autocorrect="off"
-          spellcheck="false"
-        />
+        <input id="realInput" class="hidden-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
       </section>
     </main>
 
@@ -165,8 +177,7 @@
           leftPx = typedWidth;
         } else {
           const hintLeftWidth = hintLeft.getBoundingClientRect().width;
-          const hintRightWidth = hintRight.getBoundingClientRect().width;
-          leftPx = typedWidth + hintLeftWidth + hintRightWidth;
+          leftPx = typedWidth + hintLeftWidth;
         }
 
         promptEl.style.setProperty("--cursor-left", `${leftPx}px`);
@@ -214,5 +225,43 @@
       window.addEventListener("resize", updateCursorLeft);
 
     </script>
-  </body>
-</html>
+  
+
+<div id="give-freely-root-ejkiikneibegknkgimmihdpcbcedgmpo" class="give-freely-root" data-extension-id="ejkiikneibegknkgimmihdpcbcedgmpo" data-extension-name="Volume Booster" style="display: block;"><template shadowrootmode="open"><style>
+  :host {
+    all: initial;
+  }
+
+  .gf-scroll-remove::-webkit-scrollbar {
+    border-radius-bottom-right: 15px;
+  }
+
+  button {
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
+
+  .give-freely-close-button:hover {
+    opacity: 0.7;
+  }
+
+  input[type="radio"] {
+    margin-right: 8px;
+  }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e5e5e5;
+    margin: 1em 0;
+  }
+
+  @media (max-width: 600px), (max-height: 480px) {
+    #give-freely-checkout-popup {
+      display: none !important;
+    }
+  }
+</style><div><div class="gf-app"></div></div></template></div></body></html>
