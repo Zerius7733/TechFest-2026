@@ -1,14 +1,17 @@
 # TechFest 2026 - Todo List
 
 ## Planning
-- grey out hint on landing page // done 
+- grey out hint on landing page // DONE
 - font of landing 
-- middle bottom tab navigator (alt tab)
-- search bar on top right on results page // done
-- filtering feature // done
-- scrape icon image
+- middle bottom tab navigator (alt tab) // semi-DONE
+- search bar on top right on results page // DONE
+- filtering feature // DONE
+- scrape icon image ( adding into db query func)
 - money changing function
 - losen up the search results ( too tight )
+- employee side user , status check for applications
+- new user db (students and employees)
+
 
 ## listing html 
 - host internal job listing rather than 
