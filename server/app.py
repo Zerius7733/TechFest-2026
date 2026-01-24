@@ -18,7 +18,8 @@ if not DATABASE_URL:
 app = FastAPI()
 
 # Serve your frontend folder
-FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "dream-job-landing"))
+FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Ascent"))
+print(FRONTEND_DIR)
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
 
 @app.get("/")
