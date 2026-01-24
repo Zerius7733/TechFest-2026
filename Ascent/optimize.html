@@ -6,94 +6,97 @@
   <title>Optimize</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
+
 <body>
   <main class="container heroCenter">
-      <div class="optWrap">
-    <section class="heroBig">
-      <div class="kicker">AI Recommendation</div>
-      <h1 class="headline">Improve your resume with<br/>clearer, stronger content.</h1>
-    </section>
+    <div class="optWrap">
 
-    <section class="pillRow">
-      <!-- Upload pill -->
-      <label class="pill pillUpload" for="resumeFile">
-        <input id="resumeFile" type="file" accept=".pdf,.doc,.docx" />
-        <span class="pillIcon" aria-hidden="true">⬆</span>
-        <span id="uploadLabel" class="pillText">Upload</span>
-      </label>
-
-      <!-- Industry pill -->
-      <div class="pill pillSelect">
-        <select id="industrySelect" class="pillSelectEl">
-          <option value="" selected disabled>Industries</option>
-          <option value="software">Software Engineering / Computer Science</option>
-          <option value="data_ai">Data Science / AI</option>
-          <option value="computer_eng">Computer Engineering</option>
-          <option value="product">Product Management</option>
-          <option value="ux_design">Product / UX Design</option>
-
-          <option value="accounting">Accounting / Audit</option>
-          <option value="business">Business / General Management</option>
-          <option value="finance">Finance</option>
-          <option value="consulting">Consulting</option>
-          <option value="marketing">Marketing / Communications</option>
-
-          <option value="engineering_mech">Mechanical Engineering</option>
-          <option value="engineering_eee">Electrical / Electronic Engineering</option>
-          <option value="engineering_civil">Civil Engineering</option>
-          <option value="engineering_chem">Chemical Engineering</option>
-          <option value="engineering_aero">Aerospace Engineering</option>
-          <option value="engineering_bio">Bioengineering</option>
-          <option value="engineering_env">Environmental Engineering</option>
-          <option value="engineering_iem">Information Engineering & Media</option>
-          <option value="engineering_materials">Materials Engineering</option>
-
-          <option value="science">Science / Research</option>
-          <option value="economics_policy">Economics / Public Policy</option>
-          <option value="education">Education (NIE)</option>
-          <option value="healthcare">Healthcare / Medicine</option>
-        </select>
-        <span class="pillChevron" aria-hidden="true">▼</span>
-      </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="ctaRow">
-      <button id="optimizeBtn" class="primary bigCta">Optimize</button>
-      <div id="status" class="status"></div>
-    </section>
-
-    <!-- Results (same as before) -->
-    <section id="results" class="results hidden">
-      <section class="cardsRow">
-        <div class="card mini" id="fitCard"></div>
-        <div class="card mini" id="clarityCard"></div>
-        <div class="card mini" id="keywordsCard"></div>
+      <section class="heroBig">
+        <div class="kicker">AI Recommendation</div>
+        <h1 class="headline">Improve your resume with<br/>clearer, stronger content.</h1>
       </section>
 
-      <section class="card">
-        <h2>What recruiters look for in this industry</h2>
-        <ul id="recruiterChecklist"></ul>
+      <section class="pillRow">
+        <!-- Upload pill -->
+        <label class="pill pillUpload" for="resumeFile">
+          <input id="resumeFile" type="file" accept=".pdf,.doc,.docx" />
+          <span class="pillIcon" aria-hidden="true">⬆</span>
+          <span id="uploadLabel" class="pillText">Upload</span>
+        </label>
+
+        <!-- Industry pill -->
+        <div class="pill pillSelect">
+          <select id="industrySelect" class="pillSelectEl">
+            <option value="" selected disabled>Industries</option>
+
+            <option value="software">Software Engineering / Computer Science</option>
+            <option value="data_ai">Data Science / AI</option>
+            <option value="computer_eng">Computer Engineering</option>
+            <option value="product">Product Management</option>
+            <option value="ux_design">Product / UX Design</option>
+
+            <option value="accounting">Accounting / Audit</option>
+            <option value="business">Business / General Management</option>
+            <option value="finance">Finance</option>
+            <option value="consulting">Consulting</option>
+            <option value="marketing">Marketing / Communications</option>
+
+            <option value="engineering_mech">Mechanical Engineering</option>
+            <option value="engineering_eee">Electrical / Electronic Engineering</option>
+            <option value="engineering_civil">Civil Engineering</option>
+            <option value="engineering_chem">Chemical Engineering</option>
+            <option value="engineering_aero">Aerospace Engineering</option>
+            <option value="engineering_bio">Bioengineering</option>
+            <option value="engineering_env">Environmental Engineering</option>
+            <option value="engineering_iem">Information Engineering & Media</option>
+            <option value="engineering_materials">Materials Engineering</option>
+
+            <option value="science">Science / Research</option>
+            <option value="economics_policy">Economics / Public Policy</option>
+            <option value="education">Education (NIE)</option>
+            <option value="healthcare">Healthcare / Medicine</option>
+          </select>
+          <span class="pillChevron" aria-hidden="true">▼</span>
+        </div>
       </section>
 
-      <section class="split">
-        <section class="card">
-          <h2>Original</h2>
-          <pre id="originalText" class="resumeBox"></pre>
+      <!-- CTA -->
+      <section class="ctaRow">
+        <button id="optimizeBtn" class="primary bigCta">Optimize</button>
+        <div id="status" class="status"></div>
+      </section>
+
+      <!-- Results -->
+      <section id="results" class="results hidden">
+        <section class="cardsRow">
+          <div class="card mini" id="fitCard"></div>
+          <div class="card mini" id="clarityCard"></div>
+          <div class="card mini" id="keywordsCard"></div>
         </section>
+
         <section class="card">
-          <h2>Optimized</h2>
-          <pre id="optimizedText" class="resumeBox"></pre>
+          <h2>What recruiters look for in this industry</h2>
+          <ul id="recruiterChecklist"></ul>
+        </section>
+
+        <section class="split">
+          <section class="card">
+            <h2>Original</h2>
+            <pre id="originalText" class="resumeBox"></pre>
+          </section>
+          <section class="card">
+            <h2>Optimized</h2>
+            <pre id="optimizedText" class="resumeBox"></pre>
+          </section>
+        </section>
+
+        <section class="card">
+          <h2>Pinpoint fixes</h2>
+          <div id="issues"></div>
         </section>
       </section>
 
-      <section class="card">
-        <h2>Pinpoint fixes</h2>
-        <div id="issues"></div>
-      </section>
-    </section>
     </div>
-
   </main>
 
   <!-- Floating Tab Bar -->
@@ -116,6 +119,69 @@
     </a>
   </nav>
 
+  <!-- Auth Modal (copied from landing.html) -->
+  <div class="auth-modal" id="authModal" aria-hidden="true">
+    <div class="auth-backdrop" data-close="1"></div>
+    <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <h2 id="authTitle" class="auth-title">Login required</h2>
+      <p class="auth-text">Please log in or sign up to access this section.</p>
+      <div class="auth-actions">
+        <button type="button" class="auth-btn auth-secondary" id="authCloseBtn">Cancel</button>
+        <a class="auth-btn auth-primary" href="/login">Log in</a>
+        <a class="auth-btn auth-primary" href="/signup">Sign up</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Guard Logic -->
+  <script>
+    function isLoggedIn() {
+      return !!localStorage.getItem("AUTH_TOKEN");
+    }
+
+    const authModal = document.getElementById("authModal");
+    const authCloseBtn = document.getElementById("authCloseBtn");
+
+    function openAuthModal() {
+      authModal.classList.add("open");
+      authModal.setAttribute("aria-hidden", "false");
+    }
+
+    function closeAuthModal() {
+      authModal.classList.remove("open");
+      authModal.setAttribute("aria-hidden", "true");
+    }
+
+    authCloseBtn.addEventListener("click", closeAuthModal);
+
+    document.addEventListener("click", (e) => {
+      if (e.target?.getAttribute("data-close") === "1") {
+        closeAuthModal();
+      }
+    });
+
+    // Block direct access
+    window.addEventListener("DOMContentLoaded", () => {
+      if (!isLoggedIn()) {
+        openAuthModal();
+      }
+    });
+
+    // Guard tab navigation
+    const authRequiredTabs = new Set(["profile", "optimize"]);
+
+    document.querySelectorAll(".tabbar a").forEach((a) => {
+      a.addEventListener("click", (e) => {
+        const tab = a.getAttribute("data-tab");
+        if (authRequiredTabs.has(tab) && !isLoggedIn()) {
+          e.preventDefault();
+          openAuthModal();
+        }
+      });
+    });
+  </script>
+
+  <!-- Page Logic -->
   <script src="/static/optimize.js"></script>
 </body>
 </html>

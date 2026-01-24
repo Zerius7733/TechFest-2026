@@ -464,3 +464,69 @@ button.primary:disabled{
   font-size:16px;
   line-height:1;
 }
+
+/* Auth Modal (shared across pages) */
+.auth-modal{
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 10000;
+}
+.auth-modal.open{
+  display: block;
+}
+.auth-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+}
+.auth-card{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(420px, 92vw);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.20);
+  border-radius: 18px;
+  padding: 18px;
+}
+.auth-title{
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.auth-text{
+  margin: 0 0 14px 0;
+  color: rgba(0,0,0,0.65);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.auth-actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.auth-btn{
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.auth-primary{
+  background: #111;
+  color: #fff;
+}
+.auth-secondary{
+  background: rgba(0,0,0,0.08);
+  color: rgba(0,0,0,0.75);
+}
+
