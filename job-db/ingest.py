@@ -39,24 +39,43 @@ def norm(v):
   return None if s == "" or s.lower() == "nan" else s
 
 def norm_lower(v):
-  if v is None:
+  if v is None or pd.isna(v):
     return ""
   return str(v).lower()
 
 def infer_employment_norm(raw):
-  text = " ".join([
-    norm_lower(raw.get("title")),
+  import re
+
+  title = norm_lower(raw.get("title"))
+  emp = " ".join([
     norm_lower(raw.get("employment_type")),
     norm_lower(raw.get("Employment Type")),
     norm_lower(raw.get("job_type")),
     norm_lower(raw.get("type")),
+  ])
+
+  desc = " ".join([
     norm_lower(raw.get("description")),
     norm_lower(raw.get("job_description")),
     norm_lower(raw.get("Roles & Responsibilities")),
   ])
 
-  if "intern" in text:
+  senior_title = bool(re.search(r"\b(lead|senior|principal|staff|manager|director|head)\b", title))
+
+  # Internship signal: prefer title/explicit type first
+  intern_in_title_or_type = bool(re.search(r"\bintern(ship)?\b", f"{title} {emp}"))
+
+  # Internship signal in description is weaker (can mention "mentor interns", "internship program", etc.)
+  intern_in_desc = bool(re.search(r"\bintern(ship)?\b", desc))
+
+  # Guardrail: senior titles should never become internship just because description mentions interns/internship
+  if intern_in_title_or_type and not senior_title:
     return "internship"
+  if intern_in_desc and not senior_title and not any(k in emp for k in ["permanent", "full time", "full-time"]):
+    return "internship"
+
+  text = " ".join([title, emp, desc])
+
 
   if any(k in text for k in ["full time", "full-time", "permanent"]):
     return "full_time"
