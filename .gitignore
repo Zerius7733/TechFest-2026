@@ -1,2 +1,16 @@
-/venv
+# Python virtual env
+/venv/
+
+# Environment variables
+.env
 /job-db/.env
+
+# macOS
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Local test artifacts
+resume.pdf
