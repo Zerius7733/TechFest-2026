@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --bg: #f4f6f5;
+      --card: #ffffff;
+      --text: #111111;
+      --muted: rgba(0,0,0,0.55);
+      --line: rgba(0,0,0,0.08);
+      --radius: 28px;
+      --font: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+    }
+
+    .login-card {
+      width: min(520px, 92vw);
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 26px 28px 30px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+    }
+
+    .title {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 800;
+      margin: 6px 0 14px;
+    }
+
+    .divider {
+      height: 1px;
+      background: rgba(0,0,0,0.08);
+      margin-bottom: 22px;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    label {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    input {
+      height: 46px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 0 16px;
+      font-size: 14px;
+      font-family: var(--font);
+      outline: none;
+      background: rgba(0,0,0,0.04);
+    }
+
+    input:focus {
+      border-color: rgba(0,0,0,0.25);
+      background: #fff;
+    }
+
+    .actions {
+      margin-top: 26px;
+      display: flex;
+      justify-content: center;
+    }
+
+    button {
+      min-width: 140px;
+      height: 44px;
+      border-radius: 999px;
+      border: none;
+      background: #111;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .error {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #b00020;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-card">
+    <div class="title">Login</div>
+    <div class="divider"></div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">Email:</label>
+        <input id="email" type="email" required />
+      </div>
+
+      <div class="field">
+        <label for="password">Password:</label>
+        <input id="password" type="password" required />
+      </div>
+
+      <div class="actions">
+        <button type="submit">Login</button>
+      </div>
+
+      <div class="error" id="errorMsg">Invalid email or password</div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const errorMsg = document.getElementById("errorMsg");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorMsg.style.display = "none";
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        if (!res.ok) {
+          errorMsg.style.display = "block";
+          return;
+        }
+
+        const data = await res.json();
+
+        localStorage.setItem("AUTH_TOKEN", data.access_token);
+        localStorage.setItem("USER_ROLE", data.user.role);
+
+        if (data.user.role === "student") {
+          window.location.href = "/student_profile.html";
+        } else if (data.user.role === "admin") {
+          window.location.href = "/admin_dashboard.html";
+        }
+
+      } catch (err) {
+        console.error(err);
+        errorMsg.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

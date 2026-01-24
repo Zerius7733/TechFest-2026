@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Profile</title>
+
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #f4f6f5;
+      --card: #ffffff;
+      --text: #111111;
+      --muted: rgba(0, 0, 0, 0.55);
+      --line: rgba(0, 0, 0, 0.06);
+      --shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+      --radius: 28px;
+      --font: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 26px 18px 60px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 22px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    /* Left column */
+    .profile-card {
+      padding: 18px;
+    }
+
+    .avatar {
+      width: 176px;
+      height: 176px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.06);
+      display: grid;
+      place-items: center;
+      margin: 10px auto 16px;
+      color: rgba(0, 0, 0, 0.5);
+      font-size: 14px;
+      user-select: none;
+    }
+
+    .name {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0;
+      text-align: left;
+    }
+
+    .email {
+      margin: 6px 0 0;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .about-card {
+      margin-top: 18px;
+      padding: 18px;
+    }
+
+    .about-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 0 0 14px;
+      text-align: center;
+    }
+
+    .about-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid rgba(0, 0, 0, 0.04);
+      margin-bottom: 10px;
+    }
+
+    .icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.06);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: rgba(0, 0, 0, 0.7);
+      flex: 0 0 auto;
+      user-select: none;
+    }
+
+    .about-text {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* Right column */
+    .right-col {
+      display: grid;
+      gap: 22px;
+    }
+
+    .section-card {
+      padding: 18px 18px 22px;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin: 6px 0 16px;
+    }
+
+    .table {
+      border-radius: 24px;
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      padding: 14px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 0.7fr;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 18px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.04);
+      margin: 12px 0;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .row.header {
+      background: rgba(0, 0, 0, 0.06);
+      margin-top: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .status-pill {
+      justify-self: start;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.06);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      font-size: 13px;
+      font-weight: 800;
+      color: rgba(0, 0, 0, 0.75);
+    }
+
+    .status-pill.pending {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .status-pill.applied {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .status-pill.interview {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .status-pill.offer {
+      background: rgba(0, 0, 0, 0.12);
+    }
+
+    .status-pill.rejected {
+      background: rgba(0, 0, 0, 0.06);
+      opacity: 0.8;
+    }
+
+    /* Job listing table (Company, Role, Action) */
+    .row.jobs {
+      grid-template-columns: 1.2fr 1fr 0.7fr;
+    }
+
+    .btn-pill {
+      justify-self: start;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.9);
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .btn-pill:hover {
+      background: rgba(0, 0, 0, 0.10);
+    }
+
+    @media (max-width: 980px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <!-- LEFT -->
+    <aside>
+      <div class="card profile-card">
+        <div class="avatar">image to insert</div>
+        <h2 class="name" id="studentName">Guan Yibin</h2>
+        <p class="email" id="studentEmail">guan0094@e.ntu.edu.sg</p>
+      </div>
+
+      <div class="card about-card">
+        <div class="about-title">About me</div>
+
+        <div class="about-item">
+          <div class="icon">🎓</div>
+          <div class="about-text" id="studentUni">Nanyang Technological University</div>
+        </div>
+
+        <div class="about-item">
+          <div class="icon">💻</div>
+          <div class="about-text" id="studentMajor">Computer Engineering</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+      <!-- Application Status -->
+      <main class="card section-card">
+        <div class="section-title">Application Status</div>
+
+        <div class="table" id="statusTable">
+          <div class="row header">
+            <div>Company Name</div>
+            <div>Role</div>
+            <div>Status</div>
+          </div>
+          <!-- rows inserted by JS -->
+        </div>
+      </main>
+
+      <!-- Job Listing -->
+      <section class="card section-card">
+        <div class="section-title">Job Listing</div>
+
+        <div class="table" id="jobsTable">
+          <div class="row header jobs">
+            <div>Company Name</div>
+            <div>Role</div>
+            <div></div>
+          </div>
+          <!-- rows inserted by JS -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const USER_ID = 1; // TEMP: replace after login (from token/session)
+
+
+    async function loadStudentProfile() {
+      try {
+        const res = await fetch(`/api/students/by_user/${USER_ID}`);
+        if (!res.ok) throw new Error("Failed to load student profile");
+
+        const s = await res.json();
+
+        const nameEl = document.getElementById("studentName");
+        const emailEl = document.getElementById("studentEmail");
+        const uniEl = document.getElementById("studentUni");
+        const majorEl = document.getElementById("studentMajor");
+
+        if (nameEl) nameEl.textContent = s.name || "—";
+        if (emailEl) emailEl.textContent = s.email || "—";
+        if (uniEl) uniEl.textContent = s.university || "—";
+        if (majorEl) majorEl.textContent = s.major || "—";
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function statusClass(status) {
+      return (status || "pending").toLowerCase();
+    }
+
+    function titleCase(s) {
+      const t = String(s || "");
+      if (!t) return "Pending";
+      return t.charAt(0).toUpperCase() + t.slice(1);
+    }
+
+    function clearDynamicRows(tableEl) {
+      // keep only the first row (header)
+      const rows = Array.from(tableEl.querySelectorAll(".row"));
+      rows.slice(1).forEach((r) => r.remove());
+    }
+
+    async function loadApplications() {
+      const table = document.getElementById("statusTable");
+      if (!table) return;
+
+      clearDynamicRows(table);
+
+      try {
+        const res = await fetch(`/api/applications/user/${USER_ID}`);
+        if (!res.ok) throw new Error("Failed to load applications");
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          const emptyRow = document.createElement("div");
+          emptyRow.className = "row";
+          emptyRow.innerHTML = `
+              <div class="muted">—</div>
+              <div class="muted">No applications yet</div>
+              <div class="muted">—</div>
+            `;
+          table.appendChild(emptyRow);
+          return;
+        }
+
+        data.forEach((app) => {
+          const row = document.createElement("div");
+          row.className = "row";
+
+          const status = app.status || "pending";
+
+          row.innerHTML = `
+              <div>${app.company ?? "—"}</div>
+              <div>${app.role ?? "—"}</div>
+              <div>
+                <span class="status-pill ${statusClass(status)}">
+                  ${titleCase(status)}
+                </span>
+              </div>
+            `;
+          table.appendChild(row);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadJobListings() {
+      const table = document.getElementById("jobsTable");
+      if (!table) return;
+
+      clearDynamicRows(table);
+
+      try {
+        // Backend endpoint you implement
+        // Expected: [{ job_id, company, role }, ...]
+        const res = await fetch(`/api/jobs/recommended?user_id=${encodeURIComponent(USER_ID)}`);
+        if (!res.ok) throw new Error("Failed to load job listings");
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          const emptyRow = document.createElement("div");
+          emptyRow.className = "row jobs";
+          emptyRow.innerHTML = `
+              <div class="muted">—</div>
+              <div class="muted">No jobs to show</div>
+              <div class="muted">—</div>
+            `;
+          table.appendChild(emptyRow);
+          return;
+        }
+
+        data.forEach((job) => {
+          const row = document.createElement("div");
+          row.className = "row jobs";
+
+          const jobId = job.job_id ?? job.id;
+          const roadmapHref = jobId ? `/roadmap?id=${encodeURIComponent(jobId)}` : "#";
+
+          row.innerHTML = `
+              <div>${job.company ?? "—"}</div>
+              <div>${job.role ?? job.title ?? "—"}</div>
+              <div>
+                <a class="btn-pill" href="${roadmapHref}">RoadMap</a>
+              </div>
+            `;
+
+          table.appendChild(row);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadApplications();
+    loadStudentProfile();
+    loadJobListings();
+  </script>
+</body>
+
+</html>

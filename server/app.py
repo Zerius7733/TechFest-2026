@@ -8,7 +8,11 @@ import psycopg
 from fastapi import UploadFile, File, HTTPException
 from server.services.ocr_service import ocr_bytes
 from server.routes.resume import router as resume_router
+from server.routes.auth import router as auth_router
+from server.db import db
 from pathlib import Path
+
+
 
 ENV_PATH = Path(__file__).resolve().parents[1] / "job-db" / ".env"
 # Load root .env first (LLM, app-level config)
@@ -23,7 +27,9 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL not set in job-db/.env")
 
 app = FastAPI()
+
 app.include_router(resume_router)
+app.include_router(auth_router)
 
 
 @app.post("/api/resume/ocr")
@@ -185,6 +191,115 @@ def get_job(job_id: int):
         "description": row[8],
     }
 
+@app.get("/api/students/{student_id}")
+def get_student_profile(student_id: int):
+    sql = """
+    SELECT
+      s.id as student_id,
+      u.id as user_id,
+      u.name,
+      u.email,
+      COALESCE(s.university, '') as university,
+      COALESCE(s.major, '') as major,
+      COALESCE(s.avatar_url, '') as avatar_url
+    FROM students s
+    JOIN users u ON u.id = s.user_id
+    WHERE s.id = %s
+    LIMIT 1;
+    """
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, [student_id])
+            row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    return {
+        "studentId": row[0],
+        "userId": row[1],
+        "name": row[2],
+        "email": row[3],
+        "university": row[4],
+        "major": row[5],
+        "avatarUrl": row[6],
+    }
+
+
+
+@app.get("/api/applications/student/{student_id}")
+def get_applications_for_student(student_id: int):
+    sql = """
+    SELECT
+      a.id,
+      COALESCE(c.name, '') as company,
+      COALESCE(j.title, '') as role,
+      COALESCE(a.status, 'pending') as status,
+      a.created_at
+    FROM applications a
+    LEFT JOIN companies c ON c.id = a.company_id
+    LEFT JOIN jobs j ON j.id = a.job_id
+    WHERE a.student_id = %s
+    ORDER BY a.created_at DESC, a.id DESC
+    LIMIT 100;
+    """
+
+    with db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, [student_id])
+            rows = cur.fetchall()
+
+    return [
+        {
+            "application_id": r[0],
+            "company": r[1] or "—",
+            "role": r[2] or "—",
+            "status": (r[3] or "pending"),
+            "created_at": r[4].isoformat() if r[4] else None,
+        }
+        for r in rows
+    ]
+
+
+@app.get("/api/applications/company/{company_id}")
+def get_company_applications(company_id: int):
+    sql = """
+    SELECT
+      a.id AS application_id,
+      a.status,
+      a.created_at,
+      a.student_id,
+      u.name AS student_name,
+      u.email AS student_email,
+      j.id AS job_id,
+      j.title AS role
+    FROM applications a
+    JOIN jobs j ON j.id = a.job_id
+    JOIN users u ON u.id = a.student_id
+    WHERE a.company_id = %s
+    ORDER BY a.created_at DESC, a.id DESC;
+    """
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, [company_id])
+            rows = cur.fetchall()
+
+    return [
+        {
+            "application_id": r[0],
+            "status": r[1] or "pending",
+            "created_at": r[2].isoformat() if r[2] else None,
+            "student_id": r[3],
+            "student_name": r[4],
+            "student_email": r[5],
+            "job_id": r[6],
+            "role": r[7],
+        }
+        for r in rows
+    ]
+
 
 @app.get("/job")
 def job_page():
@@ -193,6 +308,10 @@ def job_page():
 @app.get("/apply")
 def apply_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "apply.html"))
+
+@app.get("/login")
+def login_page():
+    return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
 
 @app.get("/roadmap.html")
 def roadmap_page():
