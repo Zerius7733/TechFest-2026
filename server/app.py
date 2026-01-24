@@ -23,7 +23,7 @@ app.mount("/static", StaticFiles(directory=FRONTEND_DIR, html=True), name="stati
 
 @app.get("/")
 def home():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    return FileResponse(os.path.join(FRONTEND_DIR, "landing.html"))
 
 @app.get("/results")
 def results_page():
