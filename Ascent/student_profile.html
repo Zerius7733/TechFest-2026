@@ -237,7 +237,7 @@
       }
     }
 
-        /* Floating bottom tab bar */
+    /* Floating bottom tab bar */
     .tabbar {
       position: fixed;
       bottom: 22px;
@@ -278,7 +278,6 @@
     .tabbar a:hover {
       background: rgba(0, 0, 0, 0.06);
     }
-
   </style>
 </head>
 
@@ -307,8 +306,7 @@
       </div>
 
       <div class="card" style="margin-top:18px; padding:18px; text-align:center;">
-        <button id="logoutBtn"
-                style="
+        <button id="logoutBtn" style="
                   border:0;
                   background:transparent;
                   font-size:16px;
@@ -325,18 +323,7 @@
     <div class="right-col">
       <!-- Application Status -->
       <main class="card section-card">
-
-        <div class="table" id="statusTable">
-          <div class="row header">
-            <div>Company Name</div>
-            <div>Role</div>
-            <div>Status</div>
-          </div>
-          <!-- rows inserted by JS -->
-        </div>
-
         <div class="section-title">Application Status</div>
-
         <div class="table" id="statusTable">
           <div class="row header">
             <div>Company Name</div>
@@ -345,6 +332,7 @@
           </div>
           <!-- rows inserted by JS -->
         </div>
+
       </main>
 
       <!-- Job Listing -->
@@ -534,32 +522,32 @@
       clearDynamicRows(table);
 
       try {
-          const me = await loadStudentProfile();
-          if (!me) throw new Error("Not logged in / profile not found");
+        const me = await loadStudentProfile();
+        if (!me) throw new Error("Not logged in / profile not found");
 
-          const res = await fetch(`/api/applications/student/${encodeURIComponent(me.userId)}`);
-          if (!res.ok) throw new Error("Failed to load applications");
-          const data = await res.json();
+        const res = await fetch(`/api/applications/student/${encodeURIComponent(me.userId)}`);
+        if (!res.ok) throw new Error("Failed to load applications");
+        const data = await res.json();
 
-          if (!Array.isArray(data) || data.length === 0) {
-              const emptyRow = document.createElement("div");
-              emptyRow.className = "row";
-              emptyRow.innerHTML = `
+        if (!Array.isArray(data) || data.length === 0) {
+          const emptyRow = document.createElement("div");
+          emptyRow.className = "row";
+          emptyRow.innerHTML = `
                   <div class="muted">—</div>
                   <div class="muted">No applications yet</div>
                   <div class="muted">—</div>
               `;
-              table.appendChild(emptyRow);
-              return;
-          }
+          table.appendChild(emptyRow);
+          return;
+        }
 
-          data.forEach((app) => {
-              const row = document.createElement("div");
-              row.className = "row";
+        data.forEach((app) => {
+          const row = document.createElement("div");
+          row.className = "row";
 
-              const status = app.status || "pending";
+          const status = app.status || "pending";
 
-              row.innerHTML = `
+          row.innerHTML = `
                   <div>${app.company ?? "—"}</div>
                   <div>${app.role ?? "—"}</div>
                   <div>
@@ -568,19 +556,19 @@
                       </span>
                   </div>
               `;
-              table.appendChild(row);
-          });
+          table.appendChild(row);
+        });
       } catch (err) {
-          console.error(err);
+        console.error(err);
       }
-  }
-  loadApplications();
+    }
+    //loadApplications();
 
 
 
   </script>
 
-    <!-- Floating Tab Bar -->
+  <!-- Floating Tab Bar -->
   <nav class="tabbar" aria-label="Primary">
     <a href="/" data-tab="home">
       <span class="icon">🏠</span>
