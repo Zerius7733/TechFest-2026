@@ -116,6 +116,58 @@
         width: 1px;
         height: 1px;
       }
+
+      /* Floating tab bar (centered pill) */
+      .tabbar {
+        position: fixed;
+        left: 50%;
+        bottom: 22px;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.10);
+        border-radius: 999px;
+        padding: 10px 14px;
+        display: flex;
+        gap: 10px;
+        z-index: 9999;
+      }
+
+      .tabbar a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        text-decoration: none;
+        color: rgba(0, 0, 0, 0.65);
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
+        user-select: none;
+      }
+
+      .tabbar a .icon {
+        width: 18px;
+        height: 18px;
+        display: inline-grid;
+        place-items: center;
+        font-size: 16px;
+      }
+
+      .tabbar a.active {
+        background: #111;
+        color: #fff;
+      }
+
+      /* give landing content room above tabbar */
+      body {
+        padding-bottom: 120px;
+      }
+
+
     </style>
   </head>
   <body>
@@ -144,7 +196,32 @@
       </section>
     </main>
 
+    <!-- Floating Tab Bar -->
+    <nav class="tabbar" aria-label="Primary">
+      <a href="/" data-tab="home">
+        <span class="icon">⌂</span>
+        <span>Home</span>
+      </a>
+      <a href="/results" data-tab="jobs">
+        <span class="icon">▦</span>
+        <span>Job Listings</span>
+      </a>
+      <a href="/job" data-tab="profile">
+        <span class="icon">👤</span>
+        <span>Profile</span>
+      </a>
+    </nav>
+
     <script>
+
+      function setActiveTab() {
+        document.querySelectorAll(".tabbar a").forEach((a) => a.classList.remove("active"));
+        const home = document.querySelector('.tabbar a[data-tab="home"]');
+        if (home) home.classList.add("active");
+      }
+
+      setActiveTab();
+
       const catcher = document.getElementById("catcher");
       const realInput = document.getElementById("realInput");
       const typedEl = document.getElementById("typed");
