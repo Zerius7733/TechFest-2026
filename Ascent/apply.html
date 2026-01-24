@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Upload Resume</title>
+    <style>
+      :root {
+        --bg: #f4f6f5;
+        --card: #ffffff;
+        --text: #111111;
+        --muted: rgba(0, 0, 0, 0.55);
+        --border: rgba(0, 0, 0, 0.08);
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.10);
+        --radius: 999px;
+
+        --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+      }
+
+      .page {
+        min-height: 100%;
+        position: relative;
+        padding: 24px;
+      }
+
+      .back {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 800;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+      }
+
+      .center {
+        height: calc(100vh - 48px);
+        display: grid;
+        place-items: center;
+      }
+
+      .stack {
+        width: min(860px, 92vw);
+        display: grid;
+        gap: 20px;
+        justify-items: center;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(34px, 4.5vw, 54px);
+        font-weight: 900;
+        letter-spacing: -0.03em;
+      }
+
+      .pill {
+        width: min(560px, 92vw);
+        height: 160px;
+        border-radius: var(--radius);
+        background: var(--card);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 120ms ease, box-shadow 120ms ease;
+      }
+
+      .pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.12);
+      }
+
+      .pill:active {
+        transform: translateY(0px);
+      }
+
+      .icon {
+        width: 80px;
+        height: 80px;
+      }
+
+      .hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.4;
+        text-align: center;
+      }
+
+      .status {
+        min-height: 20px;
+        font-size: 14px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .error {
+        min-height: 20px;
+        font-size: 14px;
+        color: #b00020;
+        text-align: center;
+        display: none;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="page">
+      <a class="back" href="#" id="backBtn">Back</a>
+
+      <div class="center">
+        <div class="stack">
+          <h1>Upload your resume</h1>
+
+          <div class="pill" id="uploadPill" role="button" tabindex="0" aria-label="Upload your resume PDF">
+            <!-- Inline SVG icon: resume + check -->
+            <svg class="icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="16" y="10" width="26" height="36" rx="4" stroke="#111111" stroke-width="3" />
+              <line x1="22" y1="22" x2="36" y2="22" stroke="#111111" stroke-width="3" stroke-linecap="round" />
+              <line x1="22" y1="30" x2="36" y2="30" stroke="#111111" stroke-width="3" stroke-linecap="round" />
+              <line x1="22" y1="38" x2="32" y2="38" stroke="#111111" stroke-width="3" stroke-linecap="round" />
+              <circle cx="44.5" cy="41.5" r="10.5" stroke="#111111" stroke-width="3" />
+              <path
+                d="M39.5 41.5L43 45L50 38"
+                stroke="#111111"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <p class="hint">Click the card to select a file.</p>
+
+          <div class="status" id="statusText"></div>
+          <div class="error" id="errorText"></div>
+
+          <input id="fileInput" type="file" accept="application/pdf" />
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function qs(name) {
+        return new URLSearchParams(window.location.search).get(name) || "";
+      }
+
+      function setStatus(msg) {
+        const el = document.getElementById("statusText");
+        if (el) el.textContent = msg || "";
+      }
+
+      function showError(msg) {
+        const el = document.getElementById("errorText");
+        if (!el) return;
+        el.style.display = "block";
+        el.textContent = msg || "Something went wrong.";
+      }
+
+      function clearError() {
+        const el = document.getElementById("errorText");
+        if (!el) return;
+        el.style.display = "none";
+        el.textContent = "";
+      }
+
+      const jobId = qs("id");
+      const q = qs("q");
+
+      // Back button: return to details page (preferred), fallback to results
+      const backBtn = document.getElementById("backBtn");
+      if (backBtn) {
+        backBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          if (jobId) {
+            const params = new URLSearchParams();
+            params.set("id", jobId);
+            if (q) params.set("q", q);
+            window.location.href = `/job?${params.toString()}`;
+            return;
+          }
+          window.location.href = "/results";
+        });
+      }
+
+      const pill = document.getElementById("uploadPill");
+      const fileInput = document.getElementById("fileInput");
+
+      function openPicker() {
+        clearError();
+        if (!jobId) {
+          showError("Missing job id in URL. Expected /apply?id=<job_id>");
+          return;
+        }
+        if (fileInput) fileInput.click();
+      }
+
+      async function uploadSelectedFile() {
+        clearError();
+
+        const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+        if (!file) return;
+
+        setStatus("Uploading...");
+        if (pill) pill.style.pointerEvents = "none";
+
+        try {
+          const form = new FormData();
+          form.append("file", file);
+
+          const res = await fetch(`/api/resume/ocr-skill-gap?job_id=${encodeURIComponent(jobId)}`, {
+            method: "POST",
+            body: form,
+          });
+
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            const detail = data && data.detail ? String(data.detail) : `HTTP ${res.status}`;
+            throw new Error(detail);
+          }
+
+          sessionStorage.setItem("SKILL_GAP_RESULT", JSON.stringify(data));
+          sessionStorage.setItem("SKILL_GAP_JOB_ID", jobId);
+
+          setStatus("Uploaded. Processing complete.");
+          // Later: redirect to match page
+          // window.location.href = `/match?id=${encodeURIComponent(jobId)}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+        } catch (err) {
+          setStatus("");
+          showError(err.message || "Upload failed.");
+        } finally {
+          if (pill) pill.style.pointerEvents = "auto";
+        }
+      }
+
+      if (pill) {
+        pill.addEventListener("click", openPicker);
+        pill.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") openPicker();
+        });
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener("change", uploadSelectedFile);
+      }
+    </script>
+  </body>
+</html>

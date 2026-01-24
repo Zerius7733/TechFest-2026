@@ -5,18 +5,60 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import HTTPException
 import psycopg
-
+from fastapi import UploadFile, File, HTTPException
+from server.services.ocr_service import ocr_bytes
+from server.routes.resume import router as resume_router
 from pathlib import Path
 
 ENV_PATH = Path(__file__).resolve().parents[1] / "job-db" / ".env"
-load_dotenv(dotenv_path=ENV_PATH)
+# Load root .env first (LLM, app-level config)
+load_dotenv()
+
+# Load job-db .env second (DB config)
+load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL not set in server/.env")
+    raise RuntimeError("DATABASE_URL not set in job-db/.env")
 
 app = FastAPI()
+app.include_router(resume_router)
+
+
+@app.post("/api/resume/ocr")
+async def resume_ocr(file: UploadFile = File(...)):
+    # basic guardrails
+    if not file:
+        raise HTTPException(status_code=400, detail="No file uploaded.")
+
+    data = await file.read()
+
+    # 8 MB limit (adjust if you want)
+    if len(data) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large (max 8MB).")
+
+    try:
+        text, pages = ocr_bytes(
+            file_bytes=data,
+            filename=file.filename or "",
+            content_type=file.content_type,
+            max_pages=4,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=415, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OCR failed: {e}")
+
+    # Return both full text + per-page (useful later for debugging / chunking)
+    return {
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "chars": len(text),
+        "text": text,
+        "pages": pages,
+    }
+
 
 # Serve your frontend folder
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Ascent"))
@@ -143,3 +185,6 @@ def get_job(job_id: int):
 def job_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "details.html"))
 
+@app.get("/apply")
+def apply_page():
+    return FileResponse(os.path.join(FRONTEND_DIR, "apply.html"))

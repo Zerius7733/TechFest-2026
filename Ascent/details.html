@@ -313,19 +313,19 @@
 
                 metaRow.style.display = hasMeta ? "flex" : "none";
 
-                // Apply link
+                // Apply link -> go to internal upload page
                 const applyLink = document.getElementById("applyLink");
                 if (applyLink) {
-                    if (job.url && String(job.url).trim()) {
-                        applyLink.href = job.url;
-                    } else {
-                        applyLink.href = "#";
-                        applyLink.addEventListener("click", (e) => {
-                            e.preventDefault();
-                            showError("No application URL available for this job.");
-                        });
-                    }
+                const q = qs("q") || "";
+                const params = new URLSearchParams();
+                params.set("id", String(jobId));
+                if (q) params.set("q", q);
+
+                applyLink.href = `/apply?${params.toString()}`;
+                applyLink.removeAttribute("target");
+                applyLink.removeAttribute("rel");
                 }
+
             } catch (err) {
                 showError(err.message || "Unknown error loading job.");
                 setText("overviewText", "—");
