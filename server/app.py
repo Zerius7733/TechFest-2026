@@ -328,3 +328,7 @@ def roadmap_page():
 @app.get("/student_profile")
 def student_profile_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "student_profile.html"))
+
+@app.get("/employer_profile")
+def employer_profile_page():
+    return FileResponse(os.path.join(FRONTEND_DIR, "employer_profile.html"))
