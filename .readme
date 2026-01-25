@@ -1,22 +1,36 @@
-# TechFest 2026 - Todo List
+# AI-Powered Career Development Platform
 
-## Planning
-- grey out hint on landing page // DONE
-- middle bottom tab navigator (alt tab) // DONE
-- search bar on top right on results page // DONE
-- filtering feature // DONE
-- scrape icon image ( adding into db query func)
-- money changing function
-- losen up the search results ( too tight )
-- employee side user , status check for applications
-- new user db (students and employees)
-- font of landing 
+An AI-driven career development platform that helps users bridge skill gaps in their resumes and align with job market requirements.
 
+## LLM Career Arguing Pair
 
-## listing html 
-- host internal job listing rather than 
+The system uses OCR (Optical Character Recognition) to extract text from the user's resume. Then:
 
+1. LLM 1 identifies skill gaps by comparing the target job application to the extracted resume text.
+2. The difference in skillset is matched to an embedding of the SkillsFuture course list.
+3. This result is passed to LLM 2 for review.
 
-## stretch goal
- - add image , into db.
-    - if image in db when employer registering. image will be appended to the listing
+LLM 2 provides a critique to deliver more balanced and actionable recommendations for the user.
+
+## Roadmap
+
+After the LLMs resolve their analysis, the system generates a custom roadmap highlighting:
+
+- Match quality
+- Next steps
+- Missing skills
+- Strengths
+- Relevant SkillsFuture courses
+
+## Industry-Specific Resume Optimization
+
+### How many LLMs do you need?
+
+The system uses 23 specialized agents, each focused on a specific field (for example, finance or computer science).
+
+- Each expert suggests changes and displays the original vs. improved resume.
+- The system pinpoints fixes and provides actionable recommendations.
+
+## Floating Navigation Bar
+
+For UI/UX design, the product includes a floating tab bar at the bottom of each screen for quick navigation to key areas.
