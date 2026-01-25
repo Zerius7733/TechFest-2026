@@ -424,19 +424,18 @@
 
       clearDynamicRows(table);
 
+      // Hardcode the first row of the roadmap
+  const firstRow = document.createElement("div");
+  firstRow.className = "row jobs";
+  firstRow.innerHTML = `
+    <div>SES</div>
+    <div>(Senior) Engineer, Software Engineering Solutions, Quantum Key Distribution</div>
+    <div><a class="btn-pill" href="roadmap.html?id=123">View</a></div>
+  `;
+  table.appendChild(firstRow);
+
       const list = safeJsonParse(localStorage.getItem("ASCENT_ROADMAPS"), []);
 
-      if (!Array.isArray(list) || list.length === 0) {
-        const emptyRow = document.createElement("div");
-        emptyRow.className = "row jobs";
-        emptyRow.innerHTML = `
-          <div class="muted">—</div>
-          <div class="muted">No roadmaps generated yet</div>
-          <div class="muted">—</div>
-        `;
-        table.appendChild(emptyRow);
-        return;
-      }
 
       list.forEach((rm) => {
         const row = document.createElement("div");
@@ -446,12 +445,12 @@
         const href = jobId ? `roadmap.html?id=${encodeURIComponent(jobId)}` : "roadmap.html";
 
         row.innerHTML = `
-          <div>${rm.company ?? "SES Careers and Employment"}</div>
+          <div>${rm.company ?? "—"}</div>
           <div>${rm.role ?? "—"}</div>
           <div><a class="btn-pill" href="${href}">View</a></div>
         `;
 
-        table.appendChild(row);
+        //table.appendChild(row);
       });
     }
 
@@ -505,6 +504,16 @@
 
     loadStudentProfile().then(() => loadApplications());
     loadRoadmapHistory();
+
+    // Hardcode the first row of the roadmap
+  const firstRow = document.createElement("div");
+  firstRow.className = "row jobs";
+  firstRow.innerHTML = `
+    <div>Compaxdcgfhvjbny Name 1</div>
+    <div>Role 1</div>
+    <div><a class="btn-pill" href="roadmap.html?id=123">View</a></div>
+  `;
+  //table.appendChild(firstRow);
     // Logout behavior (same as employer profile)
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
