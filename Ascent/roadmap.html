@@ -667,7 +667,7 @@
         // Save a minimal record so Student Profile can show it in the Road Map table
         upsertRoadmapRecord({
           job_id: jobId,
-          company,
+          company:company,
           role: jobTitle,
           created_at: new Date().toISOString(),
         });

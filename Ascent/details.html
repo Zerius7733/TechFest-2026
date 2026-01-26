@@ -220,9 +220,7 @@
 
 
                 <div class="actions">
-                    <a class="btn primary" id="roadmapLink" href="#" target="_blank" rel="noreferrer noopener">Roadmap</a>
-                    <a class="btn" id="applyLink" href="#">Apply</a>
-                    <input type="file" id="resumeInput" style="display:none;" />
+                    <a class="btn primary" id="applyLink" href="#" target="_blank" rel="noreferrer noopener">Apply</a>
                     <a class="btn" href="#" id="backBtn">Back to results</a>
 
                 </div>
@@ -390,41 +388,6 @@
         }
 
         loadJob();
-        // Handle the Apply button click event
-        document.getElementById('applyLink').addEventListener('click', function (e) {
-            e.preventDefault();
-            
-            // Trigger the file input selection
-            document.getElementById('resumeInput').click();  
-
-            // Once a file is selected, submit it to the backend
-            document.getElementById('resumeInput').addEventListener('change', function(event) {
-                let formData = new FormData();
-                const resumeFile = event.target.files[0];  // Get the selected file
-
-                if (resumeFile) {
-                    formData.append("resume", resumeFile);  // Add file to formData
-
-                    // Send the file to the backend
-                    fetch('/api/applications/apply', {
-                        method: 'POST',
-                        body: formData
-                    }).then(response => response.json())  // Parse the response
-                    .then(data => {
-                        if (data.ok) {
-                            alert("Application submitted successfully.");  // Success message
-                            window.location.href = '/student_profile';  // Redirect to profile page
-                        } else {
-                            alert("Error submitting application.");  // Error message
-                        }
-                    });
-                } else {
-                    alert("Please select a resume file.");  // If no file selected
-                }
-            });
-        });
-
-
     </script>
 </body>
 
