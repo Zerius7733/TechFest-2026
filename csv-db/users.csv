@@ -1,0 +1,4 @@
+id,email,name,role,created_at,password_hash
+2,admin@company.com,Company Admin,admin,2026-01-24 17:41:22.539734+00,password
+3,ccds@e.ntu.edu.sg,lee kwang soo,student,2026-01-24 17:41:22.539734+00,password
+1,suksuksuk@e.ntu.edu.sg,yoo jae suk,student,2026-01-24 17:41:22.539734+00,password
