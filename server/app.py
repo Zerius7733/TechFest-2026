@@ -1,31 +1,33 @@
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import HTTPException
-import psycopg
+# import psycopg
 from fastapi import UploadFile, File, HTTPException
 from server.services.ocr_service import ocr_bytes
 from server.routes.resume import router as resume_router
 from server.routes.auth import router as auth_router
 from server.routes.roadmaps import router as roadmaps_router
-from server.db import db
+# from server.db import db
+from server.csv_store import load_csv, find_by_id, safe_int, parse_datetime
 from pathlib import Path
 
 
 
-ENV_PATH = Path(__file__).resolve().parents[1] / "job-db" / ".env"
+# ENV_PATH = Path(__file__).resolve().parents[1] / "job-db" / ".env"
 # Load root .env first (LLM, app-level config)
 load_dotenv()
 
 # Load job-db .env second (DB config)
-load_dotenv(dotenv_path=ENV_PATH, override=True)
+# load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL not set in job-db/.env")
+# DATABASE_URL = os.getenv("DATABASE_URL")
+# if not DATABASE_URL:
+#     raise RuntimeError("DATABASE_URL not set in job-db/.env")
 
 app = FastAPI()
 
@@ -35,39 +37,31 @@ app.include_router(roadmaps_router)
 
 from server.routes.auth import require_user_id
 
+
 @app.get("/api/student_profiles/me")
 def get_my_student_profile(authorization: str | None = Header(default=None)):
     user_id = require_user_id(authorization)
 
-    sql = """
-    SELECT
-      u.id as user_id,
-      u.name,
-      u.email,
-      COALESCE(sp.university, '') as university,
-      COALESCE(sp.major, '') as major,
-      COALESCE(sp.avatar_url, '') as avatar_url
-    FROM users u
-    JOIN student_profiles sp ON sp.user_id = u.id
-    WHERE u.id = %s
-    LIMIT 1;
-    """
+    # DB disabled: read from CSV instead.
+    users = load_csv("users")
+    profiles = load_csv("student_profiles")
+    user = find_by_id(users, "id", user_id)
+    profile = None
+    for p in profiles:
+        if safe_int(p.get("user_id")) == safe_int(user_id):
+            profile = p
+            break
 
-    with db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, [user_id])
-            row = cur.fetchone()
-
-    if not row:
+    if not user or not profile:
         raise HTTPException(status_code=404, detail="Student profile not found")
 
     return {
-        "userId": row[0],
-        "name": row[1],
-        "email": row[2],
-        "university": row[3],
-        "major": row[4],
-        "avatarUrl": row[5],
+        "userId": safe_int(user.get("id")),
+        "name": user.get("name") or "",
+        "email": user.get("email") or "",
+        "university": profile.get("university") or "",
+        "major": profile.get("major") or "",
+        "avatarUrl": profile.get("avatar_url") or "",
     }
 
 
@@ -115,13 +109,16 @@ print ("debug: FRONTEND_DIR path is:")
 print(FRONTEND_DIR)
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
 
+
 @app.get("/")
 def home():
     return FileResponse(os.path.join(FRONTEND_DIR, "landing.html"))
 
+
 @app.get("/results")
 def results_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "results.html"))
+
 
 @app.get("/optimize")
 def optimize_page():
@@ -136,198 +133,181 @@ def search(
     offset: int = 0
 ):
     """
-    Full-text search using jobs.search_tsv (from earlier SQL).
-    Falls back to ILIKE if search_tsv isn't populated.
+    CSV search: simple substring match on title/company/description.
     """
+    # DB disabled. Previous query used search_tsv + ILIKE + ORDER BY posted_days/id.
     q = q.strip()
 
-    sql = """
-    SELECT
-    id, source, title, company, location, employment_type, salary, url,
-    COALESCE(description_clean, '') as description_clean
-    FROM jobs
-    WHERE
-    (
-        (search_tsv IS NOT NULL AND search_tsv @@ websearch_to_tsquery('english', %s))
-        OR
-        (search_tsv IS NULL AND (
-        COALESCE(title,'') ILIKE %s OR
-        COALESCE(company,'') ILIKE %s OR
-        COALESCE(description_clean,'') ILIKE %s
-        ))
-    )
-    """
+    q_lc = q.lower()
+    rows = load_csv("jobs")
+    filtered = []
+    for r in rows:
+        title = (r.get("title") or "").lower()
+        company = (r.get("company") or "").lower()
+        desc = (r.get("description_clean") or r.get("description") or "").lower()
+        if q_lc not in title and q_lc not in company and q_lc not in desc:
+            continue
+        if filter == "internship" and (r.get("employment_norm") or "") != "internship":
+            continue
+        if filter == "full-time" and (r.get("employment_norm") or "") != "full_time":
+            continue
+        if filter == "remote" and (r.get("work_mode_norm") or "") != "remote":
+            continue
+        filtered.append(r)
 
-    like = f"%{q}%"
+    def _sort_key(row):
+        posted_days = safe_int(row.get("posted_days"))
+        job_id = safe_int(row.get("id")) or 0
+        return (posted_days is None, posted_days or 0, -job_id)
 
-    filters_sql = ""
-    params = [q, like, like, like]
-
-    if filter == "internship":
-        filters_sql += " AND employment_norm = 'internship'"
-    elif filter == "full-time":
-        filters_sql += " AND employment_norm = 'full_time'"
-    elif filter == "remote":
-        filters_sql += " AND work_mode_norm = 'remote'"
-
-    order_sql = """
-    ORDER BY
-    CASE WHEN search_tsv IS NOT NULL THEN ts_rank(search_tsv, websearch_to_tsquery('english', %s)) END DESC NULLS LAST,
-    posted_days ASC NULLS LAST,
-    id DESC
-    LIMIT %s OFFSET %s;
-    """
-
-    final_sql = sql + filters_sql + order_sql
-    params += [q, limit, offset]
-
-
-    with psycopg.connect(DATABASE_URL) as conn:
-        with conn.cursor() as cur:
-            cur.execute(final_sql, params)
-            rows = cur.fetchall()
+    filtered.sort(key=_sort_key)
+    page = filtered[offset:offset + limit]
 
     results = []
-    for r in rows:
+    for r in page:
         results.append({
-            "id": r[0],
-            "source": r[1],
-            "title": r[2],
-            "company": r[3],
-            "location": r[4],
-            "employment_type": r[5],
-            "salary": r[6],
-            "url": r[7],
-            "description": r[8],
+            "id": safe_int(r.get("id")),
+            "source": r.get("source"),
+            "title": r.get("title"),
+            "company": r.get("company"),
+            "location": r.get("location"),
+            "employment_type": r.get("employment_type"),
+            "salary": r.get("salary"),
+            "url": r.get("url"),
+            "description": r.get("description_clean") or r.get("description") or "",
         })
 
     return {"query": q, "count": len(results), "results": results}
 
+
 @app.get("/api/jobs/{job_id}")
 def get_job(job_id: int):
-    sql = """
-    SELECT
-      id, source, title, company, location, employment_type, salary, url,
-      COALESCE(description_clean, '') as description    
-    FROM jobs
-    WHERE id = %s
-    LIMIT 1;
-    """
-
-    with psycopg.connect(DATABASE_URL) as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, [job_id])
-            row = cur.fetchone()
-
+    # DB disabled. Previous query selected by jobs.id.
+    row = find_by_id(load_csv("jobs"), "id", job_id)
     if not row:
         raise HTTPException(status_code=404, detail="Job not found")
 
     return {
-        "id": row[0],
-        "source": row[1],
-        "title": row[2],
-        "company": row[3],
-        "location": row[4],
-        "employment_type": row[5],
-        "salary": row[6],
-        "url": row[7],
-        "description": row[8],
+        "id": safe_int(row.get("id")),
+        "source": row.get("source"),
+        "title": row.get("title"),
+        "company": row.get("company"),
+        "location": row.get("location"),
+        "employment_type": row.get("employment_type"),
+        "salary": row.get("salary"),
+        "url": row.get("url"),
+        "description": row.get("description_clean") or row.get("description") or "",
     }
-
 
 
 @app.get("/api/applications/student/{student_id}")
 def get_applications_for_student(student_id: int):
-    sql = """
-    SELECT
-      a.id,
-      COALESCE(c.name, '') as company,
-      COALESCE(j.title, '') as role,
-      COALESCE(a.status, 'pending') as status,
-      a.created_at
-    FROM applications a
-    LEFT JOIN companies c ON c.id = a.company_id
-    LEFT JOIN jobs j ON j.id = a.job_id
-    WHERE a.student_id = %s
-    ORDER BY a.created_at DESC, a.id DESC
-    LIMIT 100;
-    """
+    # DB disabled. Previous query joined applications/companies/jobs by student_id.
+    applications = load_csv("applications")
+    companies = load_csv("companies")
+    jobs = load_csv("jobs")
 
-    with db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, [student_id])
-            rows = cur.fetchall()
+    companies_by_id = {safe_int(c.get("id")): c for c in companies}
+    jobs_by_id = {safe_int(j.get("id")): j for j in jobs}
 
-    return [
-        {
-            "application_id": r[0],
-            "company": r[1] or "—",
-            "role": r[2] or "—",
-            "status": (r[3] or "pending"),
-            "created_at": r[4].isoformat() if r[4] else None,
-        }
-        for r in rows
-    ]
+    rows = []
+    for a in applications:
+        if safe_int(a.get("student_id")) != safe_int(student_id):
+            continue
+        rows.append(a)
+
+    def _app_sort_key(row):
+        created = parse_datetime(row.get("created_at"))
+        app_id = safe_int(row.get("id")) or 0
+        return (created is None, created or datetime.min, -app_id)
+
+    rows.sort(key=_app_sort_key, reverse=True)
+    rows = rows[:100]
+
+    out = []
+    for r in rows:
+        company = companies_by_id.get(safe_int(r.get("company_id"))) or {}
+        job = jobs_by_id.get(safe_int(r.get("job_id"))) or {}
+        created = parse_datetime(r.get("created_at"))
+        out.append(
+            {
+                "application_id": safe_int(r.get("id")),
+                "company": (company.get("name") or "—"),
+                "role": (job.get("title") or "—"),
+                "status": (r.get("status") or "pending"),
+                "created_at": created.isoformat() if created else None,
+            }
+        )
+    return out
 
 
 @app.get("/api/applications/company/{company_id}")
 def get_company_applications(company_id: int):
-    sql = """
-    SELECT
-      a.id AS application_id,
-      a.status,
-      a.created_at,
-      a.student_id,
-      u.name AS student_name,
-      u.email AS student_email,
-      j.id AS job_id,
-      j.title AS role
-    FROM applications a
-    JOIN jobs j ON j.id = a.job_id
-    JOIN users u ON u.id = a.student_id
-    WHERE a.company_id = %s
-    ORDER BY a.created_at DESC, a.id DESC;
-    """
+    # DB disabled. Previous query joined applications/jobs/users by company_id.
+    applications = load_csv("applications")
+    jobs = load_csv("jobs")
+    users = load_csv("users")
 
-    with psycopg.connect(DATABASE_URL) as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, [company_id])
-            rows = cur.fetchall()
+    jobs_by_id = {safe_int(j.get("id")): j for j in jobs}
+    users_by_id = {safe_int(u.get("id")): u for u in users}
 
-    return [
-        {
-            "application_id": r[0],
-            "status": r[1] or "pending",
-            "created_at": r[2].isoformat() if r[2] else None,
-            "student_id": r[3],
-            "student_name": r[4],
-            "student_email": r[5],
-            "job_id": r[6],
-            "role": r[7],
-        }
-        for r in rows
-    ]
+    rows = []
+    for a in applications:
+        if safe_int(a.get("company_id")) != safe_int(company_id):
+            continue
+        rows.append(a)
+
+    def _app_sort_key(row):
+        created = parse_datetime(row.get("created_at"))
+        app_id = safe_int(row.get("id")) or 0
+        return (created is None, created or datetime.min, -app_id)
+
+    rows.sort(key=_app_sort_key, reverse=True)
+
+    out = []
+    for r in rows:
+        job = jobs_by_id.get(safe_int(r.get("job_id"))) or {}
+        user = users_by_id.get(safe_int(r.get("student_id"))) or {}
+        created = parse_datetime(r.get("created_at"))
+        out.append(
+            {
+                "application_id": safe_int(r.get("id")),
+                "status": r.get("status") or "pending",
+                "created_at": created.isoformat() if created else None,
+                "student_id": safe_int(r.get("student_id")),
+                "student_name": user.get("name"),
+                "student_email": user.get("email"),
+                "job_id": safe_int(job.get("id")),
+                "role": job.get("title"),
+            }
+        )
+    return out
 
 
 @app.get("/job")
 def job_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "details.html"))
 
+
 @app.get("/apply")
 def apply_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "apply.html"))
+
 
 @app.get("/login")
 def login_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
 
+
 @app.get("/roadmap.html")
 def roadmap_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "roadmap.html"))
 
+
 @app.get("/student_profile")
 def student_profile_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "student_profile.html"))
+
 
 @app.get("/employer_profile")
 def employer_profile_page():

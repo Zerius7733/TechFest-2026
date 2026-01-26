@@ -1,0 +1,4 @@
+-applications (writing n reading)
+-email noti
+- apply ui interaction ( no login prompt , str to road map)
+- money convertion
