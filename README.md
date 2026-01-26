@@ -11,8 +11,7 @@ The platform differentiates itself through a **multi-agent large language model 
 
 A short project introduction and system walkthrough is available at the link below:
 
-**Video link:**  
-[Insert 3-minute TechFest 2026 introduction video link here]
+[![Ascent – TechFest 2026 Project Introduction](https://img.youtube.com/vi/NirTzC58Q_A/0.jpg)](https://www.youtube.com/watch?v=NirTzC58Q_A)
 
 This video covers:
 - Problem motivation and objectives
