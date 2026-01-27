@@ -5,6 +5,7 @@ TODO:
 - email noti 
 - option to reupload resume after uploading before already, should delete old entry as well (CREATE A POP UP UI like company_profile with option to view,upload, delete)
 - sign up 
+- query doesnt retain   
 
 WORKING ON: 
 

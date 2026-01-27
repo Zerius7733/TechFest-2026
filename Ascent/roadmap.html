@@ -660,14 +660,31 @@
         return Math.round((matched / total) * 100);
       }
 
-      function loadRoadmapData() {
-        // The upload page should do:
-        // localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(apiResponse))
-        // then redirect to roadmap
+      async function loadRoadmapData() {
+        // Prefer server roadmap by job_id if present
+        const jobId = getQueryParam("id");
+        const token = getToken();
+        if (jobId && token) {
+          try {
+            const res = await fetch("/api/roadmaps/me", { headers: authHeaders() });
+            if (res.ok) {
+              const list = await res.json();
+              const match = Array.isArray(list)
+                ? list.find((r) => String(r.job_id) === String(jobId))
+                : null;
+              if (match && match.payload) return match.payload;
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        }
+
+        // Fallback: last generated roadmap stored locally
         try {
           const raw = localStorage.getItem("ASCENT_ROADMAP_DATA");
           if (raw) return JSON.parse(raw);
         } catch {}
+
         // fallback demo
         return {
           job_title: "Software Engineer Intern",
@@ -688,11 +705,11 @@
         };
       }
 
-      function render() {
-        const data = loadRoadmapData();
+      async function render() {
+        const data = await loadRoadmapData();
 
-        // Use URL ?id=... as the primary key so profile can link back correctly
-        const jobId = getQueryParam("id") || data.job_id || data.id || data.jobId || Date.now().toString();
+        // Prefer the API payload's job_id to avoid mismatches with stale URL params
+        const jobId = data.job_id || data.id || data.jobId || getQueryParam("id") || Date.now().toString();
         const company = data.company || data.company_name || "—";
 
         const jobTitle = data.job_title || data.final_recommendation?.target_role || "Target role";
