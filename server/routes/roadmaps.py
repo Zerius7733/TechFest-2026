@@ -67,7 +67,6 @@ def upsert_my_roadmap(body: RoadmapUpsert, user_id: int = Depends(require_user_i
             target = r
             break
 
-    # For same user + job, overwrite the existing entry (no duplicates).
     if target:
         target["company"] = body.company or ""
         target["role"] = body.role or ""
