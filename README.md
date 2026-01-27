@@ -90,7 +90,7 @@ Ascent/
 ├── apply.html
 ├── landing.html
 ├── results.html
-├── roadmap.html
+├── roadmap
 ├── student_profile.html
 ├── employer_profile.html
 ├── optimize.html

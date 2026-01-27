@@ -278,6 +278,90 @@
     .tabbar a:hover {
       background: rgba(0, 0, 0, 0.06);
     }
+
+    .action-card {
+      margin-top: 18px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .action-btn {
+      border: 0;
+      background: transparent;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(680px, 92vw);
+      background: var(--card);
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .modal-title {
+      margin: 0 0 10px;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .modal-meta {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .resume-box {
+      width: 100%;
+      height: 60vh;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .modal-btn {
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .modal-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: inherit;
+      text-decoration: none;
+      opacity: 0.8;
+    }
   </style>
 </head>
 
@@ -305,16 +389,12 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:18px; padding:18px; text-align:center;">
-        <button id="logoutBtn" style="
-                  border:0;
-                  background:transparent;
-                  font-size:16px;
-                  font-weight:800;
-                  cursor:pointer;
-                ">
-          Logout
-        </button>
+      <div class="card action-card">
+        <button id="resumeBtn" class="action-btn">Resume</button>
+      </div>
+
+      <div class="card action-card">
+        <button id="logoutBtn" class="action-btn">Logout</button>
       </div>
 
     </aside>
@@ -431,7 +511,7 @@
           row.className = "row jobs";
 
           const jobId = rm.job_id ?? rm.id ?? rm.jobId;
-          const href = jobId ? `roadmap.html?id=${encodeURIComponent(jobId)}` : "roadmap.html";
+          const href = jobId ? `roadmap?id=${encodeURIComponent(jobId)}` : "roadmap";
 
           row.innerHTML = `
             <div>${rm.company ?? "—"}</div>
@@ -494,8 +574,121 @@
       }
     }
 
+    // Override with a fallback that uses localStorage when server returns empty
+    async function loadRoadmapHistory() {
+      const table = document.getElementById("jobsTable");
+      if (!table) return;
+
+      clearDynamicRows(table);
+
+      function renderRows(list) {
+        if (!Array.isArray(list) || list.length === 0) {
+          const emptyRow = document.createElement("div");
+          emptyRow.className = "row jobs";
+          emptyRow.innerHTML = `
+            <div class="muted">â€”</div>
+            <div class="muted">No roadmaps yet</div>
+            <div class="muted">â€”</div>
+          `;
+          table.appendChild(emptyRow);
+          return;
+        }
+
+        list.forEach((rm) => {
+          const row = document.createElement("div");
+          row.className = "row jobs";
+
+          const jobId = rm.job_id ?? rm.id ?? rm.jobId;
+          const href = jobId ? `roadmap?id=${encodeURIComponent(jobId)}` : "roadmap";
+
+          row.innerHTML = `
+            <div>${rm.company ?? "â€”"}</div>
+            <div>${rm.role ?? "â€”"}</div>
+            <div><a class="btn-pill" href="${href}">View</a></div>
+          `;
+
+          table.appendChild(row);
+        });
+      }
+
+      try {
+        const res = await fetch("/api/roadmaps/me", { headers: authHeaders() });
+        if (!res.ok) throw new Error("Failed to load roadmaps");
+        const list = await res.json();
+
+        if (Array.isArray(list) && list.length > 0) {
+          renderRows(list);
+          return;
+        }
+
+        const localList = safeJsonParse(localStorage.getItem("ASCENT_ROADMAPS"), []);
+        renderRows(localList);
+      } catch (err) {
+        console.error(err);
+        const localList = safeJsonParse(localStorage.getItem("ASCENT_ROADMAPS"), []);
+        renderRows(localList);
+      }
+    }
+
     loadStudentProfile().then(() => loadApplications());
     loadRoadmapHistory();
+
+    const resumeBtn = document.getElementById("resumeBtn");
+    const resumeOverlay = document.getElementById("resumeOverlay");
+    const resumeFrameEl = document.getElementById("resumeFrame");
+    const resumeMetaEl = document.getElementById("resumeMeta");
+    const resumeCloseBtn = document.getElementById("resumeCloseBtn");
+    const resumeOpenLink = document.getElementById("resumeOpenLink");
+
+    function openResumeModal() {
+      if (resumeOverlay) resumeOverlay.classList.add("open");
+    }
+
+    function closeResumeModal() {
+      if (resumeOverlay) resumeOverlay.classList.remove("open");
+    }
+
+    function showResumeFromStorage() {
+      fetch("/api/resume/me", { headers: authHeaders() })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data || !data.has_resume || !data.file_url) {
+            alert("No resume uploaded yet.");
+            return;
+          }
+
+          if (resumeFrameEl) resumeFrameEl.src = data.file_url;
+          if (resumeOpenLink) resumeOpenLink.href = data.file_url;
+          if (resumeMetaEl) {
+            const parts = [];
+            if (data.resume_name) parts.push(data.resume_name);
+            if (data.resume_uploaded_at) {
+              parts.push(`Uploaded: ${new Date(data.resume_uploaded_at).toLocaleString()}`);
+            }
+            resumeMetaEl.textContent = parts.join(" • ");
+          }
+          // Open in a new tab first (more reliable than iframe PDF rendering)
+          window.open(data.file_url, "_blank", "noopener");
+          openResumeModal();
+        })
+        .catch(() => {
+          alert("No resume uploaded yet.");
+        });
+    }
+
+    if (resumeBtn) {
+      resumeBtn.addEventListener("click", showResumeFromStorage);
+    }
+
+    if (resumeCloseBtn) {
+      resumeCloseBtn.addEventListener("click", closeResumeModal);
+    }
+
+    if (resumeOverlay) {
+      resumeOverlay.addEventListener("click", (e) => {
+        if (e.target === resumeOverlay) closeResumeModal();
+      });
+    }
 
     // Logout behavior (same as employer profile)
     const logoutBtn = document.getElementById("logoutBtn");
@@ -528,6 +721,19 @@
       <span>Profile</span>
     </a>
   </nav>
+
+  <!-- Resume Modal -->
+  <div class="overlay" id="resumeOverlay" role="dialog" aria-modal="true" aria-labelledby="resumeTitle">
+    <div class="modal">
+      <h3 class="modal-title" id="resumeTitle">Uploaded Resume</h3>
+      <p class="modal-meta" id="resumeMeta"></p>
+      <iframe class="resume-box" id="resumeFrame" title="Resume preview"></iframe>
+      <div class="modal-actions">
+        <a class="modal-link" id="resumeOpenLink" target="_blank" rel="noopener">Open in new tab</a>
+        <button class="modal-btn" id="resumeCloseBtn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 

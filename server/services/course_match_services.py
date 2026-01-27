@@ -35,7 +35,19 @@ def recommend_courses_from_missing_skills(
 
     # Query 1: focus on missing skills
     query = "Courses to learn and upskill: " + ", ".join(skills) if skills else "Courses for career upskilling"
-    courses_1 = query_courses(query_text=query, top_k=top_k)
+    try:
+        courses_1 = query_courses(query_text=query, top_k=top_k)
+    except Exception as e:
+        return {
+            "query": query,
+            "fallback_query": None,
+            "missing_skills": skills,
+            "top_k": top_k,
+            "strong_threshold": 0.72,
+            "courses": [],
+            "strong_matches": [],
+            "error": str(e),
+        }
 
     # Dedupe (handles TGS-xxxx and TGS-xxxx#1)
     courses_1 = _dedupe_courses(courses_1)

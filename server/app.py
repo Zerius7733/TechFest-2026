@@ -7,12 +7,14 @@ from fastapi.responses import FileResponse
 from fastapi import HTTPException
 # import psycopg
 from fastapi import UploadFile, File, HTTPException
+from pydantic import BaseModel
 from server.services.ocr_service import ocr_bytes
 from server.routes.resume import router as resume_router
 from server.routes.auth import router as auth_router
 from server.routes.roadmaps import router as roadmaps_router
 # from server.db import db
-from server.csv_store import load_csv, find_by_id, safe_int, parse_datetime
+from server.csv_store import load_csv, find_by_id, safe_int, parse_datetime,write_csv, append_row
+from typing import List, Dict, Optional, Any, Iterable
 from pathlib import Path
 
 
@@ -57,11 +59,42 @@ def get_my_student_profile(authorization: str | None = Header(default=None)):
 
     return {
         "userId": safe_int(user.get("id")),
-        "name": user.get("name") or "",
+        "name": user.get("name").title() or "",
         "email": user.get("email") or "",
         "university": profile.get("university") or "",
         "major": profile.get("major") or "",
         "avatarUrl": profile.get("avatar_url") or "",
+    }
+
+
+@app.get("/api/company_profiles/me")
+def get_my_company_profile(authorization: str | None = Header(default=None)):
+    user_id = require_user_id(authorization)
+
+    users = load_csv("users")
+    company_profiles = load_csv("company_profiles")
+    companies = load_csv("companies")
+
+    user = find_by_id(users, "id", user_id)
+    profile = None
+    for p in company_profiles:
+        if safe_int(p.get("user_id")) == safe_int(user_id):
+            profile = p
+            break
+
+    if not user or not profile:
+        raise HTTPException(status_code=404, detail="Company profile not found")
+
+    company_id = safe_int(profile.get("company_id"))
+    company = find_by_id(companies, "id", company_id) if company_id is not None else None
+
+    return {
+        "userId": safe_int(user.get("id")),
+        "name": user.get("name") or "",
+        "email": user.get("email") or "",
+        "companyId": company_id,
+        "companyName": (company.get("name") if company else "") or "",
+        "title": "Employer Admin",
     }
 
 
@@ -105,9 +138,12 @@ async def resume_ocr(file: UploadFile = File(...)):
 
 # Serve your frontend folder
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Ascent"))
+UPLOADS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "uploads"))
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 print ("debug: FRONTEND_DIR path is:")
 print(FRONTEND_DIR)
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR, html=True), name="static")
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 
 @app.get("/")
@@ -275,13 +311,61 @@ def get_company_applications(company_id: int):
                 "status": r.get("status") or "pending",
                 "created_at": created.isoformat() if created else None,
                 "student_id": safe_int(r.get("student_id")),
-                "student_name": user.get("name"),
+                "student_name": user.get("name").title(),
                 "student_email": user.get("email"),
                 "job_id": safe_int(job.get("id")),
                 "role": job.get("title"),
             }
         )
     return out
+
+
+class ApplicationStatusUpdate(BaseModel):
+    status: str
+
+
+@app.patch("/api/applications/{application_id}/status")
+def update_application_status(application_id: int, payload: ApplicationStatusUpdate, authorization: str | None = Header(default=None)):
+    user_id = require_user_id(authorization)
+
+    company_profiles = load_csv("company_profiles")
+    companies = load_csv("companies")
+
+    profile = None
+    for p in company_profiles:
+        if safe_int(p.get("user_id")) == safe_int(user_id):
+            profile = p
+            break
+
+    if not profile:
+        raise HTTPException(status_code=403, detail="Company profile not found")
+
+    company_id = safe_int(profile.get("company_id"))
+    if company_id is None or not find_by_id(companies, "id", company_id):
+        raise HTTPException(status_code=403, detail="Company not found")
+
+    applications = load_csv("applications")
+    target = None
+    for a in applications:
+        if safe_int(a.get("id")) == safe_int(application_id):
+            target = a
+            break
+
+    if not target:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    if safe_int(target.get("company_id")) != safe_int(company_id):
+        raise HTTPException(status_code=403, detail="Not allowed for this application")
+
+    status = (payload.status or "").strip().lower()
+    if status not in {"pending", "offer", "reject", "interview"}:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    target["status"] = status
+    fieldnames = list(applications[0].keys()) if applications else ["id", "student_id", "job_id", "company_id", "status", "created_at"]
+    write_csv("applications", applications, fieldnames=fieldnames)
+
+    return {"ok": True, "application_id": safe_int(application_id), "status": status}
 
 
 @app.get("/job")
@@ -299,7 +383,7 @@ def login_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
 
 
-@app.get("/roadmap.html")
+@app.get("/roadmap")
 def roadmap_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "roadmap.html"))
 

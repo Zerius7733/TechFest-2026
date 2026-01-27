@@ -1,4 +1,16 @@
--applications (writing n reading)
--email noti
+TODO:
+-applications (writing n reading) db side, from job listing
 - apply ui interaction ( no login prompt , str to road map)
 - money convertion
+- email noti 
+- option to reupload resume after uploading before already, should delete old entry as well (CREATE A POP UP UI like company_profile with option to view,upload, delete)
+- sign up 
+
+WORKING ON: 
+
+DONE:
+- employer profile static 2 dynamic (DONE)
+- employer applications status update to csv db (write) from employer side (DONE)
+- roadmap UI, "back to details" , with q value and job id (DONE)
+- student user profile able to view own resume after uploading (DONE)
+- roadmap caching (DONE)

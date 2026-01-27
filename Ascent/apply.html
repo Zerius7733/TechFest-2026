@@ -246,11 +246,11 @@
           <span class="icon">🏠</span>
           <span>Home</span>
         </a>
-        <a href="/results" data-tab="jobs">
+        <a href="/results" data-tab="jobs" class="active">
           <span class="icon">💼</span>
           <span>Listings</span>
         </a>
-        <a href="/optimize" data-tab="optimize" class="active">
+        <a href="/optimize" data-tab="optimize">
           <span class="icon">📄</span>
           <span>Optimize</span>
         </a>
@@ -285,6 +285,15 @@
         el.textContent = "";
       }
 
+      function getToken() {
+        return localStorage.getItem("AUTH_TOKEN") || "";
+      }
+
+      function authHeaders() {
+        const t = getToken();
+        return t ? { Authorization: `Bearer ${t}` } : {};
+      }
+
       const jobId = qs("id");
       const q = qs("q");
 
@@ -298,6 +307,10 @@
             params.set("id", jobId);
             if (q) params.set("q", q);
             window.location.href = `/job?${params.toString()}`;
+            return;
+          }
+          if (q) {
+            window.location.href = `/results?q=${encodeURIComponent(q)}`;
             return;
           }
           window.location.href = "/results";
@@ -331,6 +344,9 @@
 
           const res = await fetch(`/api/resume/ocr-skill-gap?job_id=${encodeURIComponent(jobId)}`, {
             method: "POST",
+            headers: {
+              ...authHeaders(),
+            },
             body: form,
           });
 
@@ -341,10 +357,14 @@
             throw new Error(detail);
           }
 
+          localStorage.setItem("LAST_RESUME_TEXT", String(data.resume_text_preview || ""));
+          localStorage.setItem("LAST_RESUME_FILE", String(file.name || ""));
+          localStorage.setItem("LAST_RESUME_AT", new Date().toISOString());
+
           sessionStorage.setItem("SKILL_GAP_RESULT", JSON.stringify(data));
           sessionStorage.setItem("SKILL_GAP_JOB_ID", jobId);
           localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(data));
-          window.location.href = "/roadmap.html";
+          window.location.href = "/roadmap?q=" + encodeURIComponent(q);
           return;
 
           // Later: redirect to match page
@@ -373,7 +393,33 @@
       if (useExistingPill) {
         useExistingPill.addEventListener("click", () => {
           clearError();
-          showError("No resume has been uploaded yet. Please upload one first.");
+          if (!jobId) {
+            showError("Missing job id in URL. Expected /apply?id=<job_id>");
+            return;
+          }
+          setStatus("Using existing resume...");
+          fetch(`/api/resume/ocr-skill-gap-existing?job_id=${encodeURIComponent(jobId)}`, {
+            method: "POST",
+            headers: {
+              ...authHeaders(),
+            },
+          })
+            .then((res) => res.json().then((data) => ({ ok: res.ok, data, status: res.status })))
+            .then(({ ok, data, status }) => {
+              if (!ok) {
+                const detail = data && data.detail ? String(data.detail) : `HTTP ${status}`;
+                throw new Error(detail);
+              }
+
+              sessionStorage.setItem("SKILL_GAP_RESULT", JSON.stringify(data));
+              sessionStorage.setItem("SKILL_GAP_JOB_ID", jobId);
+              localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(data));
+              window.location.href = "/roadmap?q=" + encodeURIComponent(q);
+            })
+            .catch((err) => {
+              setStatus("");
+              showError(err.message || "No resume has been uploaded yet.");
+            });
         });
       }
 

@@ -67,6 +67,7 @@
         line-height: 1.1;
         margin: 0;
         font-weight: 800;
+        text-transform: capitalize;
       }
 
       .email {
@@ -143,13 +144,13 @@
         padding: 14px 18px;
         margin: 14px 10px;
         display: grid;
-        grid-template-columns: 1.4fr 1fr 0.9fr 120px;
+        grid-template-columns: 1.2fr 1.2fr 0.9fr 120px;
         align-items: center;
-        gap: 12px;
+        column-gap: 18px;
       }
 
-      .cell { font-weight: 800; }
-      .cell.muted { color: rgba(0, 0, 0, 0.7); font-weight: 800; }
+      .cell { font-weight: 700; }
+      .cell.muted { color: rgba(0, 0, 0, 0.7); font-weight: 700; }
 
       .status-pill {
         display: inline-flex;
@@ -159,7 +160,7 @@
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.65);
         border: 1px solid rgba(0, 0, 0, 0.07);
-        font-weight: 900;
+        font-weight: 700;
         text-transform: capitalize;
       }
 
@@ -170,7 +171,7 @@
         color: #111;
         padding: 10px 14px;
         border-radius: 999px;
-        font-weight: 900;
+        font-weight: 800;
         cursor: pointer;
         transition: transform 0.05s ease, filter 0.12s ease;
       }
@@ -250,9 +251,9 @@
         <!-- LEFT COLUMN -->
         <div>
           <section class="card profile-card">
-            <div class="avatar">image to insert</div>
-            <h1 class="name">Test User</h1>
-            <p class="email">testmail@e.ntu.edu.sg</p>
+            <div class="avatar" id="employerAvatar">image to insert</div>
+            <h1 class="name" id="employerName">Employer Name</h1>
+            <p class="email" id="employerEmail">employer@email.com</p>
           </section>
 
           <section class="card about-card">
@@ -276,7 +277,7 @@
                   <path d="M2 13h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                 </svg>
               </div>
-              <div>Title</div>
+              <div id="employerTitle">Title</div>
             </div>
 
             <div class="about-row">
@@ -296,7 +297,7 @@
                   />
                 </svg>
               </div>
-              <div>Company Name</div>
+              <div id="employerCompany">Company Name</div>
             </div>
           </section>
 
@@ -310,55 +311,7 @@
         <section class="card status-card">
           <div class="status-header">Application Status</div>
           <div class="divider"></div>
-
-          <div class="row" data-app-id="1">
-            <div class="cell">Student Name</div>
-            <div class="cell muted">Role</div>
-            <div class="cell"><span class="status-pill" data-status>pending</span></div>
-            <button class="btn" data-edit type="button">Edit</button>
-          </div>
-
-          <div class="row" data-app-id="2">
-            <div class="cell">Student Name</div>
-            <div class="cell muted">Role</div>
-            <div class="cell"><span class="status-pill" data-status>pending</span></div>
-            <button class="btn" data-edit type="button">Edit</button>
-          </div>
-
-          <div class="row" data-app-id="3">
-            <div class="cell">Student Name</div>
-            <div class="cell muted">Role</div>
-            <div class="cell"><span class="status-pill" data-status>pending</span></div>
-            <button class="btn" data-edit type="button">Edit</button>
-          </div>
-
-          <div class="row" data-app-id="4">
-            <div class="cell">Student Name</div>
-            <div class="cell muted">Role</div>
-            <div class="cell"><span class="status-pill" data-status>pending</span></div>
-            <button class="btn" data-edit type="button">Edit</button>
-          </div>
-
-          <div class="row" data-app-id="5">
-            <div class="cell">Student Name</div>
-            <div class="cell muted">Role</div>
-            <div class="cell"><span class="status-pill" data-status>pending</span></div>
-            <button class="btn" data-edit type="button">Edit</button>
-          </div>
-
-          <div class="row" data-app-id="6">
-            <div class="cell">Student Name</div>
-            <div class="cell muted">Role</div>
-            <div class="cell"><span class="status-pill" data-status>pending</span></div>
-            <button class="btn" data-edit type="button">Edit</button>
-          </div>
-
-          <div class="row" data-app-id="7">
-            <div class="cell">Student Name</div>
-            <div class="cell muted">Role</div>
-            <div class="cell"><span class="status-pill" data-status>pending</span></div>
-            <button class="btn" data-edit type="button">Edit</button>
-          </div>
+          <div id="applicationsTable"></div>
         </section>
       </div>
     </div>
@@ -405,6 +358,63 @@
 
       let activeRow = null;
 
+      function getToken() {
+        return localStorage.getItem("AUTH_TOKEN") || "";
+      }
+
+      function authHeaders() {
+        const t = getToken();
+        return t ? { Authorization: `Bearer ${t}` } : {};
+      }
+
+      function toInitials(name) {
+        const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return "EM";
+        const first = parts[0][0] || "";
+        const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+        return (first + last).toUpperCase() || "EM";
+      }
+
+      async function loadEmployerProfile() {
+        try {
+          const res = await fetch("/api/company_profiles/me", { headers: authHeaders() });
+          if (!res.ok) throw new Error("Failed to load company profile");
+          const profile = await res.json();
+
+          const nameEl = document.getElementById("employerName");
+          const emailEl = document.getElementById("employerEmail");
+          const titleEl = document.getElementById("employerTitle");
+          const companyEl = document.getElementById("employerCompany");
+          const avatarEl = document.getElementById("employerAvatar");
+
+          if (nameEl) nameEl.textContent = profile.name || "-";
+          if (emailEl) emailEl.textContent = profile.email || "-";
+          if (titleEl) titleEl.textContent = profile.title || "Employer Admin";
+          if (companyEl) companyEl.textContent = profile.companyName || "-";
+          if (avatarEl) avatarEl.textContent = toInitials(profile.name);
+
+          return profile;
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      }
+
+      function statusText(status) {
+        const s = String(status || "pending").toLowerCase();
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      }
+
+      function bindEditButtons() {
+        document.querySelectorAll("[data-edit]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const row = btn.closest(".row");
+            if (!row) return;
+            openModal(row);
+          });
+        });
+      }
+
       function openModal(row) {
         activeRow = row;
 
@@ -433,15 +443,23 @@
         return picked ? picked.value : null;
       }
 
-      document.querySelectorAll("[data-edit]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const row = btn.closest(".row");
-          if (!row) return;
-          openModal(row);
+      async function persistStatus(applicationId, status) {
+        const res = await fetch(`/api/applications/${encodeURIComponent(applicationId)}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+          },
+          body: JSON.stringify({ status }),
         });
-      });
+        if (!res.ok) {
+          const msg = await res.text();
+          throw new Error(msg || "Failed to update status");
+        }
+        return res.json();
+      }
 
-      saveBtn.addEventListener("click", () => {
+      saveBtn.addEventListener("click", async () => {
         if (!activeRow) return;
 
         const nextStatus = getSelectedStatus();
@@ -450,10 +468,22 @@
           return;
         }
 
-        const statusEl = activeRow.querySelector("[data-status]");
-        if (statusEl) statusEl.textContent = nextStatus;
+        const appId = activeRow.dataset.appId;
+        if (!appId) {
+          modalSubtitle.textContent = "Missing application id.";
+          return;
+        }
 
-        closeModal();
+        try {
+          await persistStatus(appId, nextStatus);
+          const statusEl = activeRow.querySelector("[data-status]");
+          if (statusEl) statusEl.textContent = statusText(nextStatus);
+          closeModal();
+        } catch (err) {
+          console.error(err);
+          modalSubtitle.textContent = "Failed to save status. Try again.";
+        }
+
       });
 
       cancelBtn.addEventListener("click", closeModal);
@@ -465,6 +495,56 @@
       window.addEventListener("keydown", (e) => {
         if (e.key === "Escape" && overlay.classList.contains("open")) closeModal();
       });
+
+      async function loadApplications() {
+        const listEl = document.getElementById("applicationsTable");
+        if (!listEl) return;
+
+        listEl.innerHTML = "";
+
+        try {
+          const profile = await loadEmployerProfile();
+          if (!profile || !profile.companyId) throw new Error("Company profile not found");
+
+          const res = await fetch(`/api/applications/company/${encodeURIComponent(profile.companyId)}`);
+          if (!res.ok) throw new Error("Failed to load applications");
+          const data = await res.json();
+
+          if (!Array.isArray(data) || data.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "row";
+            empty.innerHTML = `
+              <div class="cell muted">-</div>
+              <div class="cell muted">No applications yet</div>
+              <div class="cell muted">-</div>
+              <div></div>
+            `;
+            listEl.appendChild(empty);
+            return;
+          }
+
+          data.forEach((app) => {
+            const row = document.createElement("div");
+            row.className = "row";
+            row.dataset.appId = app.application_id || "";
+            const status = app.status || "pending";
+
+            row.innerHTML = `
+              <div class="cell">${app.student_name ?? "-"}</div>
+              <div class="cell muted">${app.role ?? "-"}</div>
+              <div class="cell"><span class="status-pill" data-status>${statusText(status)}</span></div>
+              <button class="btn" data-edit type="button">Edit</button>
+            `;
+            listEl.appendChild(row);
+          });
+
+          bindEditButtons();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadApplications();
 
       // Logout behavior (adjust redirect as needed)
       const logoutBtn = document.getElementById("logoutBtn");

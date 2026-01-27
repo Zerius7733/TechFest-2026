@@ -518,6 +518,9 @@
 
     <script>
       const $ = (id) => document.getElementById(id);
+      //const CURRENT_Q = localStorage.getItem("q") || "";
+      //const CURRENT_Q = localStorage.getItem("ASCENT_LAST_QUERY") || "";
+      const CURRENT_Q = new URLSearchParams(window.location.search).get("q") || "";
 
       function getQueryParam(name) {
         const u = new URL(window.location.href);
@@ -541,6 +544,37 @@
         else list.unshift(record);
 
         localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function getToken() {
+        return localStorage.getItem("AUTH_TOKEN") || "";
+      }
+
+      function authHeaders() {
+        const t = getToken();
+        return t ? { Authorization: `Bearer ${t}` } : {};
+      }
+
+      async function upsertRoadmapServer(record, fullPayload) {
+        const token = getToken();
+        if (!token) return;
+        try {
+          await fetch("/api/roadmaps", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...authHeaders(),
+            },
+            body: JSON.stringify({
+              job_id: record.job_id,
+              company: record.company,
+              role: record.role,
+              payload: fullPayload,
+            }),
+          });
+        } catch (err) {
+          console.error(err);
+        }
       }
 
 
@@ -629,7 +663,7 @@
       function loadRoadmapData() {
         // The upload page should do:
         // localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(apiResponse))
-        // then redirect to roadmap.html
+        // then redirect to roadmap
         try {
           const raw = localStorage.getItem("ASCENT_ROADMAP_DATA");
           if (raw) return JSON.parse(raw);
@@ -671,6 +705,14 @@
           role: jobTitle,
           created_at: new Date().toISOString(),
         });
+        upsertRoadmapServer(
+          {
+            job_id: jobId,
+            company: company,
+            role: jobTitle,
+          },
+          data
+        );
 
 
         const gap = data.gap || {};
@@ -756,7 +798,7 @@
         // Buttons
         $("backBtn").onclick = () => history.back();
         $("restartBtn").onclick = () => (window.location.href = "apply.html");
-        $("viewJobBtn").onclick = () => (window.location.href = "details.html");
+        $("viewJobBtn").onclick = () => (window.location.href = `/job?id=${encodeURIComponent(jobId)}&q=${encodeURIComponent(CURRENT_Q)}`);
       }
 
       render();

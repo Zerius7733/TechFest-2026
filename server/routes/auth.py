@@ -24,7 +24,7 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
-def require_user_id(authorization: str | None) -> int:
+def require_user_id(authorization: str | None = Header(default=None)) -> int:
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
 

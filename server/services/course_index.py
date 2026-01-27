@@ -18,6 +18,34 @@ COLLECTION_NAME = "skillsfuture_courses"
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 BATCH_SIZE = 128
+MODEL_ENV_VAR = "SENTENCE_TRANSFORMER_MODEL"
+LOCAL_ONLY_ENV_VAR = "SENTENCE_TRANSFORMER_LOCAL_ONLY"
+
+
+def _get_model_name() -> str:
+    return os.getenv(MODEL_ENV_VAR, MODEL_NAME)
+
+
+def _get_model() -> SentenceTransformer:
+    """
+    Load embedding model, with a local-only fallback for offline setups.
+    """
+    model_name = _get_model_name()
+    local_only = os.getenv(LOCAL_ONLY_ENV_VAR, "").strip() == "1" or os.getenv("HF_HUB_OFFLINE", "").strip() == "1"
+    try:
+        return SentenceTransformer(model_name, local_files_only=local_only)
+    except Exception as e:
+        if not local_only:
+            # If download fails (DNS/offline), retry using cached files only.
+            try:
+                return SentenceTransformer(model_name, local_files_only=True)
+            except Exception:
+                pass
+        raise RuntimeError(
+            f"Embedding model unavailable: {model_name}. "
+            f"Set {MODEL_ENV_VAR} to a local path or pre-download the model, "
+            f"or set {LOCAL_ONLY_ENV_VAR}=1 to force local-only mode."
+        ) from e
 
 
 def _sha256_file(path: str) -> str:
@@ -122,12 +150,13 @@ def build_index(force_rebuild: bool = False) -> Dict[str, Any]:
     except Exception:
         pass
 
+    model_name = _get_model_name()
     col = client.get_or_create_collection(
         name=COLLECTION_NAME,
-        metadata={"csv_sha256": csv_hash, "model": MODEL_NAME},
+        metadata={"csv_sha256": csv_hash, "model": model_name},
     )
 
-    model = SentenceTransformer(MODEL_NAME)
+    model = _get_model()
 
     ids: List[str] = []
     docs: List[str] = []
@@ -195,7 +224,7 @@ def query_courses(query_text: str, top_k: int = 8) -> List[Dict[str, Any]]:
         # build once automatically if missing
         build_index(force_rebuild=False)
 
-    model = SentenceTransformer(MODEL_NAME)
+    model = _get_model()
     q_emb = model.encode([query_text], normalize_embeddings=True).tolist()[0]
 
     res = col.query(

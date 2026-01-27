@@ -11,5 +11,9 @@ def get_job_by_id(job_id: int) -> Dict[str, str]:
     if not row:
         raise KeyError(f"Job not found: {job_id}")
 
-    return {"title": row.get("title") or "", "description": row.get("description") or ""}
+    return {
+        "title": row.get("title") or "",
+        "description": row.get("description") or "",
+        "company": row.get("company") or "",
+    }
 
