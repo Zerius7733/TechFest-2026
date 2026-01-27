@@ -343,7 +343,7 @@
           <div class="row header jobs">
             <div>Company Name</div>
             <div>Role</div>
-            <div></div>
+            <div>Roadmap</div>
           </div>
           <!-- rows inserted by JS -->
         </div>
@@ -361,13 +361,6 @@
       const t = getToken();
       return t ? { Authorization: `Bearer ${t}` } : {};
     }
-
-
-    function authHeaders() {
-      const t = getToken();
-      return t ? { Authorization: `Bearer ${t}` } : {};
-    }
-
 
     async function loadStudentProfile() {
       try {
@@ -410,48 +403,47 @@
       rows.slice(1).forEach((r) => r.remove());
     }
 
-    function safeJsonParse(raw, fallback) {
-      try {
-        return raw ? JSON.parse(raw) : fallback;
-      } catch {
-        return fallback;
-      }
-    }
-
-    function loadRoadmapHistory() {
+    async function loadRoadmapHistory() {
       const table = document.getElementById("jobsTable");
       if (!table) return;
 
       clearDynamicRows(table);
 
-      // Hardcode the first row of the roadmap
-  const firstRow = document.createElement("div");
-  firstRow.className = "row jobs";
-  firstRow.innerHTML = `
-    <div>SES</div>
-    <div>(Senior) Engineer, Software Engineering Solutions, Quantum Key Distribution</div>
-    <div><a class="btn-pill" href="roadmap.html?id=123">View</a></div>
-  `;
-  table.appendChild(firstRow);
+      try {
+        const res = await fetch("/api/roadmaps/me", { headers: authHeaders() });
+        if (!res.ok) throw new Error("Failed to load roadmaps");
+        const list = await res.json();
 
-      const list = safeJsonParse(localStorage.getItem("ASCENT_ROADMAPS"), []);
+        if (!Array.isArray(list) || list.length === 0) {
+          const emptyRow = document.createElement("div");
+          emptyRow.className = "row jobs";
+          emptyRow.innerHTML = `
+            <div class="muted">—</div>
+            <div class="muted">No roadmaps yet</div>
+            <div class="muted">—</div>
+          `;
+          table.appendChild(emptyRow);
+          return;
+        }
 
+        list.forEach((rm) => {
+          const row = document.createElement("div");
+          row.className = "row jobs";
 
-      list.forEach((rm) => {
-        const row = document.createElement("div");
-        row.className = "row jobs";
+          const jobId = rm.job_id ?? rm.id ?? rm.jobId;
+          const href = jobId ? `roadmap.html?id=${encodeURIComponent(jobId)}` : "roadmap.html";
 
-        const jobId = rm.job_id ?? rm.id ?? rm.jobId;
-        const href = jobId ? `roadmap.html?id=${encodeURIComponent(jobId)}` : "roadmap.html";
+          row.innerHTML = `
+            <div>${rm.company ?? "—"}</div>
+            <div>${rm.role ?? "—"}</div>
+            <div><a class="btn-pill" href="${href}">View</a></div>
+          `;
 
-        row.innerHTML = `
-          <div>${rm.company ?? "—"}</div>
-          <div>${rm.role ?? "—"}</div>
-          <div><a class="btn-pill" href="${href}">View</a></div>
-        `;
-
-        //table.appendChild(row);
-      });
+          table.appendChild(row);
+        });
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     async function loadApplications() {
@@ -505,15 +497,6 @@
     loadStudentProfile().then(() => loadApplications());
     loadRoadmapHistory();
 
-    // Hardcode the first row of the roadmap
-  const firstRow = document.createElement("div");
-  firstRow.className = "row jobs";
-  firstRow.innerHTML = `
-    <div>Compaxdcgfhvjbny Name 1</div>
-    <div>Role 1</div>
-    <div><a class="btn-pill" href="roadmap.html?id=123">View</a></div>
-  `;
-  //table.appendChild(firstRow);
     // Logout behavior (same as employer profile)
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
@@ -523,57 +506,6 @@
         window.location.href = "/";
       });
     }
-
-    async function loadApplications() {
-      const table = document.getElementById("statusTable");
-      if (!table) return;
-
-      clearDynamicRows(table);
-
-      try {
-        const me = await loadStudentProfile();
-        if (!me) throw new Error("Not logged in / profile not found");
-
-        const res = await fetch(`/api/applications/student/${encodeURIComponent(me.userId)}`);
-        if (!res.ok) throw new Error("Failed to load applications");
-        const data = await res.json();
-
-        if (!Array.isArray(data) || data.length === 0) {
-          const emptyRow = document.createElement("div");
-          emptyRow.className = "row";
-          emptyRow.innerHTML = `
-                  <div class="muted">—</div>
-                  <div class="muted">No applications yet</div>
-                  <div class="muted">—</div>
-              `;
-          table.appendChild(emptyRow);
-          return;
-        }
-
-        data.forEach((app) => {
-          const row = document.createElement("div");
-          row.className = "row";
-
-          const status = app.status || "pending";
-
-          row.innerHTML = `
-                  <div>${app.company ?? "—"}</div>
-                  <div>${app.role ?? "—"}</div>
-                  <div>
-                      <span class="status-pill ${statusClass(status)}">
-                          ${titleCase(status)}
-                      </span>
-                  </div>
-              `;
-          table.appendChild(row);
-        });
-      } catch (err) {
-        console.error(err);
-      }
-  }
-  //loadApplications();
-
-
 
   </script>
 
