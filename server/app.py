@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Header
 from fastapi.staticfiles import StaticFiles
@@ -12,6 +12,7 @@ from server.services.ocr_service import ocr_bytes
 from server.routes.resume import router as resume_router
 from server.routes.auth import router as auth_router
 from server.routes.roadmaps import router as roadmaps_router
+from server.routes.applications import router as applications_router
 # from server.db import db
 from server.csv_store import load_csv, find_by_id, safe_int, parse_datetime,write_csv, append_row
 from typing import List, Dict, Optional, Any, Iterable
@@ -36,6 +37,7 @@ app = FastAPI()
 app.include_router(resume_router)
 app.include_router(auth_router)
 app.include_router(roadmaps_router)
+app.include_router(applications_router)
 
 from server.routes.auth import require_user_id
 
@@ -254,6 +256,8 @@ def get_applications_for_student(student_id: int):
 
     def _app_sort_key(row):
         created = parse_datetime(row.get("created_at"))
+        if created and created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
         app_id = safe_int(row.get("id")) or 0
         return (created is None, created or datetime.min, -app_id)
 
@@ -295,6 +299,8 @@ def get_company_applications(company_id: int):
 
     def _app_sort_key(row):
         created = parse_datetime(row.get("created_at"))
+        if created and created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
         app_id = safe_int(row.get("id")) or 0
         return (created is None, created or datetime.min, -app_id)
 
@@ -375,7 +381,14 @@ def job_page():
 
 @app.get("/apply")
 def apply_page():
-    return FileResponse(os.path.join(FRONTEND_DIR, "apply.html"))
+    return FileResponse(
+        os.path.join(FRONTEND_DIR, "apply.html"),
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @app.get("/login")

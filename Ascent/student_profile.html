@@ -285,7 +285,7 @@
       text-align: center;
     }
 
-    .action-btn {
+    .action-card .action-btn {
       border: 0;
       background: transparent;
       font-size: 16px;
@@ -362,6 +362,38 @@
       text-decoration: none;
       opacity: 0.8;
     }
+
+    .action-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .resume-action-btn {
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .resume-action-btn.primary {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    .resume-action-btn.danger {
+      color: #b00020;
+    }
+
+    .action-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
   </style>
 </head>
 
@@ -432,6 +464,7 @@
   </div>
 
   <script>
+    window.addEventListener("DOMContentLoaded", () => {
 
     function getToken() {
       return localStorage.getItem("AUTH_TOKEN") || "";
@@ -440,6 +473,16 @@
     function authHeaders() {
       const t = getToken();
       return t ? { Authorization: `Bearer ${t}` } : {};
+    }
+
+    let CURRENT_USER_ID = null;
+    async function getCurrentUserId() {
+      if (CURRENT_USER_ID) return CURRENT_USER_ID;
+      const res = await fetch("/api/auth/me", { headers: authHeaders() });
+      if (!res.ok) throw new Error("Not logged in");
+      const data = await res.json();
+      CURRENT_USER_ID = data.userId;
+      return CURRENT_USER_ID;
     }
 
     async function loadStudentProfile() {
@@ -533,10 +576,11 @@
       clearDynamicRows(table);
 
       try {
-        const me = await loadStudentProfile();
-        if (!me) throw new Error("Not logged in / profile not found");
-
-        const res = await fetch(`/api/applications/student/${encodeURIComponent(me.userId)}`);
+        const userId = await getCurrentUserId();
+        const res = await fetch(
+          `/api/applications/student/${encodeURIComponent(userId)}`,
+          { headers: authHeaders() }
+        );
         if (!res.ok) throw new Error("Failed to load applications");
         const data = await res.json();
 
@@ -639,6 +683,13 @@
     const resumeMetaEl = document.getElementById("resumeMeta");
     const resumeCloseBtn = document.getElementById("resumeCloseBtn");
     const resumeOpenLink = document.getElementById("resumeOpenLink");
+    const resumeActionOverlay = document.getElementById("resumeActionOverlay");
+    const resumeActionCloseBtn = document.getElementById("resumeActionCloseBtn");
+    const resumeViewBtn = document.getElementById("resumeViewBtn");
+    const resumeUploadBtn = document.getElementById("resumeUploadBtn");
+    const resumeDeleteBtn = document.getElementById("resumeDeleteBtn");
+    const resumeActionNote = document.getElementById("resumeActionNote");
+    const resumeFileInput = document.getElementById("resumeFileInput");
 
     function openResumeModal() {
       if (resumeOverlay) resumeOverlay.classList.add("open");
@@ -676,8 +727,89 @@
         });
     }
 
+    function openResumeActionModal() {
+      if (resumeActionOverlay) resumeActionOverlay.classList.add("open");
+      if (resumeActionNote) resumeActionNote.textContent = "";
+    }
+
+    function closeResumeActionModal() {
+      if (resumeActionOverlay) resumeActionOverlay.classList.remove("open");
+      if (resumeFileInput) resumeFileInput.value = "";
+    }
+
+    async function uploadResumeFile(file) {
+      if (!file) return;
+      if (resumeActionNote) resumeActionNote.textContent = "Uploading...";
+      try {
+        const fd = new FormData();
+        fd.append("resume", file);
+        const res = await fetch("/api/resume/upload", {
+          method: "POST",
+          headers: { ...authHeaders() },
+          body: fd,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail = data && data.detail ? String(data.detail) : "Upload failed.";
+          throw new Error(detail);
+        }
+        if (resumeActionNote) resumeActionNote.textContent = "Resume updated.";
+      } catch (err) {
+        if (resumeActionNote) resumeActionNote.textContent = err.message || "Upload failed.";
+      }
+    }
+
+    async function deleteResume() {
+      if (resumeActionNote) resumeActionNote.textContent = "Deleting...";
+      try {
+        const res = await fetch("/api/resume/me", {
+          method: "DELETE",
+          headers: { ...authHeaders() },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail = data && data.detail ? String(data.detail) : "Delete failed.";
+          throw new Error(detail);
+        }
+        if (resumeActionNote) resumeActionNote.textContent = "Resume deleted.";
+      } catch (err) {
+        if (resumeActionNote) resumeActionNote.textContent = err.message || "Delete failed.";
+      }
+    }
+
     if (resumeBtn) {
-      resumeBtn.addEventListener("click", showResumeFromStorage);
+      resumeBtn.addEventListener("click", openResumeActionModal);
+    }
+
+    if (resumeActionCloseBtn) {
+      resumeActionCloseBtn.addEventListener("click", closeResumeActionModal);
+    }
+
+    if (resumeActionOverlay) {
+      resumeActionOverlay.addEventListener("click", (e) => {
+        if (e.target === resumeActionOverlay) closeResumeActionModal();
+      });
+    }
+
+    if (resumeViewBtn) {
+      resumeViewBtn.addEventListener("click", showResumeFromStorage);
+    }
+
+    if (resumeUploadBtn) {
+      resumeUploadBtn.addEventListener("click", () => {
+        if (resumeFileInput) resumeFileInput.click();
+      });
+    }
+
+    if (resumeFileInput) {
+      resumeFileInput.addEventListener("change", () => {
+        const file = resumeFileInput.files && resumeFileInput.files[0];
+        uploadResumeFile(file);
+      });
+    }
+
+    if (resumeDeleteBtn) {
+      resumeDeleteBtn.addEventListener("click", deleteResume);
     }
 
     if (resumeCloseBtn) {
@@ -700,6 +832,7 @@
       });
     }
 
+    });
   </script>
 
   <!-- Floating Tab Bar -->
@@ -732,6 +865,24 @@
         <a class="modal-link" id="resumeOpenLink" target="_blank" rel="noopener">Open in new tab</a>
         <button class="modal-btn" id="resumeCloseBtn" type="button">Close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Resume Actions Modal -->
+  <div class="overlay" id="resumeActionOverlay" role="dialog" aria-modal="true" aria-labelledby="resumeActionTitle">
+    <div class="modal">
+      <h3 class="modal-title" id="resumeActionTitle">Resume</h3>
+      <p class="modal-meta">View, upload a new resume, or delete the current one.</p>
+      <div class="action-grid">
+        <button class="resume-action-btn" id="resumeViewBtn" type="button">View current resume</button>
+        <button class="resume-action-btn primary" id="resumeUploadBtn" type="button">Upload new resume</button>
+        <button class="resume-action-btn danger" id="resumeDeleteBtn" type="button">Delete resume</button>
+      </div>
+      <div class="action-note" id="resumeActionNote"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="resumeActionCloseBtn" type="button">Close</button>
+      </div>
+      <input id="resumeFileInput" type="file" accept="application/pdf" style="display:none;" />
     </div>
   </div>
 

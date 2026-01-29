@@ -186,6 +186,99 @@ def get_my_resume(authorization: str | None = Header(default=None)):
     }
 
 
+@router.post("/upload")
+async def upload_resume(resume: UploadFile = File(...), authorization: str | None = Header(default=None)):
+    user_id = require_user_id(authorization)
+    if not resume:
+        raise HTTPException(status_code=400, detail="No file uploaded.")
+
+    data = await resume.read()
+    if len(data) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large (max 8MB).")
+
+    profiles = load_csv("student_profiles")
+    target = None
+    for p in profiles:
+        if safe_int(p.get("user_id")) == safe_int(user_id):
+            target = p
+            break
+
+    if not target:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    # Remove old resume if present
+    old_path = (target.get("resume_path") or "").strip()
+    if old_path:
+        abs_old = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", old_path))
+        try:
+            if os.path.exists(abs_old):
+                os.remove(abs_old)
+        except OSError:
+            pass
+
+    original_name = os.path.basename(resume.filename or "resume.pdf")
+    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "resumes"))
+    os.makedirs(upload_dir, exist_ok=True)
+    stored_name = f"{user_id}_{ts}_{original_name}"
+    file_path = os.path.join(upload_dir, stored_name)
+    with open(file_path, "wb") as f:
+        f.write(data)
+
+    target["resume_path"] = os.path.join("resumes", stored_name)
+    target["resume_name"] = original_name
+    target["resume_uploaded_at"] = datetime.utcnow().isoformat()
+    fieldnames = list(profiles[0].keys())
+    for extra in ["resume_path", "resume_name", "resume_uploaded_at"]:
+        if extra not in fieldnames:
+            fieldnames.append(extra)
+    write_csv("student_profiles", profiles, fieldnames=fieldnames)
+
+    return {
+        "ok": True,
+        "resume_name": original_name,
+        "resume_uploaded_at": target["resume_uploaded_at"],
+        "file_url": f"/uploads/resumes/{stored_name}",
+    }
+
+
+@router.delete("/me")
+def delete_my_resume(authorization: str | None = Header(default=None)):
+    user_id = require_user_id(authorization)
+
+    profiles = load_csv("student_profiles")
+    target = None
+    for p in profiles:
+        if safe_int(p.get("user_id")) == safe_int(user_id):
+            target = p
+            break
+
+    if not target:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    resume_path = (target.get("resume_path") or "").strip()
+    removed = False
+    if resume_path:
+        abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", resume_path))
+        try:
+            if os.path.exists(abs_path):
+                os.remove(abs_path)
+                removed = True
+        except OSError:
+            pass
+
+    target["resume_path"] = ""
+    target["resume_name"] = ""
+    target["resume_uploaded_at"] = ""
+    fieldnames = list(profiles[0].keys())
+    for extra in ["resume_path", "resume_name", "resume_uploaded_at"]:
+        if extra not in fieldnames:
+            fieldnames.append(extra)
+    write_csv("student_profiles", profiles, fieldnames=fieldnames)
+
+    return {"ok": True, "removed": removed}
+
+
 @router.post("/ocr-skill-gap-existing")
 async def ocr_skill_gap_existing(
     job_id: int = Query(..., description="jobs.id (primary key)"),

@@ -144,7 +144,7 @@
         padding: 14px 18px;
         margin: 14px 10px;
         display: grid;
-        grid-template-columns: 1.2fr 1.2fr 0.9fr 120px;
+        grid-template-columns: 1.2fr 1.2fr 0.9fr 110px 110px;
         align-items: center;
         column-gap: 18px;
       }
@@ -241,6 +241,32 @@
       @media (max-width: 700px) {
         .row { grid-template-columns: 1fr; border-radius: 24px; }
         .btn { width: 100%; }
+      }
+
+      .resume-frame {
+        width: 100%;
+        height: 60vh;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 16px;
+        background: #fff;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .modal-link {
+        display: inline-flex;
+        align-items: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: inherit;
+        text-decoration: none;
+        opacity: 0.8;
       }
     </style>
   </head>
@@ -350,11 +376,32 @@
       </div>
     </div>
 
+    <!-- Resume Modal -->
+    <div class="overlay" id="resumeOverlay" role="dialog" aria-modal="true" aria-labelledby="resumeTitle">
+      <div class="modal">
+        <div class="modal-head">
+          <h3 class="modal-title" id="resumeTitle">Submitted Resume</h3>
+          <p class="modal-subtitle" id="resumeSubtitle">Student resume for this application.</p>
+        </div>
+        <div class="modal-body">
+          <iframe class="resume-frame" id="resumeFrame" title="Resume preview"></iframe>
+          <div class="modal-actions">
+            <a class="modal-link" id="resumeOpenLink" target="_blank" rel="noopener">Open in new tab</a>
+            <button class="btn secondary" id="resumeCloseBtn" type="button">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       const overlay = document.getElementById("overlay");
       const cancelBtn = document.getElementById("cancelBtn");
       const saveBtn = document.getElementById("saveBtn");
       const modalSubtitle = document.getElementById("modalSubtitle");
+      const resumeOverlay = document.getElementById("resumeOverlay");
+      const resumeFrame = document.getElementById("resumeFrame");
+      const resumeOpenLink = document.getElementById("resumeOpenLink");
+      const resumeCloseBtn = document.getElementById("resumeCloseBtn");
 
       let activeRow = null;
 
@@ -438,6 +485,15 @@
         document.querySelectorAll('input[name="statusChoice"]').forEach((r) => (r.checked = false));
       }
 
+      function openResumeModal() {
+        if (resumeOverlay) resumeOverlay.classList.add("open");
+      }
+
+      function closeResumeModal() {
+        if (resumeOverlay) resumeOverlay.classList.remove("open");
+        if (resumeFrame) resumeFrame.src = "";
+      }
+
       function getSelectedStatus() {
         const picked = document.querySelector('input[name="statusChoice"]:checked');
         return picked ? picked.value : null;
@@ -496,6 +552,37 @@
         if (e.key === "Escape" && overlay.classList.contains("open")) closeModal();
       });
 
+      if (resumeCloseBtn) resumeCloseBtn.addEventListener("click", closeResumeModal);
+      if (resumeOverlay) {
+        resumeOverlay.addEventListener("click", (e) => {
+          if (e.target === resumeOverlay) closeResumeModal();
+        });
+      }
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && resumeOverlay && resumeOverlay.classList.contains("open")) {
+          closeResumeModal();
+        }
+      });
+
+      async function openResumeForApplication(applicationId) {
+        try {
+          const res = await fetch(
+            `/api/applications/${encodeURIComponent(applicationId)}/resume`,
+            { headers: authHeaders() }
+          );
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const detail = data && data.detail ? String(data.detail) : "Failed to load resume.";
+            throw new Error(detail);
+          }
+          if (resumeFrame) resumeFrame.src = data.file_url || "";
+          if (resumeOpenLink) resumeOpenLink.href = data.file_url || "#";
+          openResumeModal();
+        } catch (err) {
+          alert(err.message || "Unable to load resume.");
+        }
+      }
+
       async function loadApplications() {
         const listEl = document.getElementById("applicationsTable");
         if (!listEl) return;
@@ -533,12 +620,21 @@
               <div class="cell">${app.student_name ?? "-"}</div>
               <div class="cell muted">${app.role ?? "-"}</div>
               <div class="cell"><span class="status-pill" data-status>${statusText(status)}</span></div>
+              <button class="btn" data-resume type="button">Resume</button>
               <button class="btn" data-edit type="button">Edit</button>
             `;
             listEl.appendChild(row);
           });
 
           bindEditButtons();
+          document.querySelectorAll("[data-resume]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const row = btn.closest(".row");
+              const appId = row?.dataset?.appId;
+              if (!appId) return;
+              openResumeForApplication(appId);
+            });
+          });
         } catch (err) {
           console.error(err);
         }
