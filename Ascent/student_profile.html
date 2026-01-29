@@ -153,7 +153,7 @@
 
     .row {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 0.7fr;
+      grid-template-columns: 1.2fr 1fr 0.6fr 44px;
       gap: 12px;
       align-items: center;
       padding: 16px 18px;
@@ -208,6 +208,21 @@
     /* Job listing table (Company, Role, Action) */
     .row.jobs {
       grid-template-columns: 1.2fr 1fr 0.7fr;
+    }
+
+    .link-btn {
+      justify-self: start;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: rgba(0, 0, 0, 0.06);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 16px;
+      color: inherit;
     }
 
     .btn-pill {
@@ -441,6 +456,7 @@
             <div>Company Name</div>
             <div>Role</div>
             <div>Status</div>
+            <div></div>
           </div>
           <!-- rows inserted by JS -->
         </div>
@@ -475,6 +491,14 @@
       return t ? { Authorization: `Bearer ${t}` } : {};
     }
 
+    function safeJsonParse(raw, fallback) {
+      try {
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
     let CURRENT_USER_ID = null;
     async function getCurrentUserId() {
       if (CURRENT_USER_ID) return CURRENT_USER_ID;
@@ -503,6 +527,7 @@
         if (emailEl) emailEl.textContent = s.email || "—";
         if (uniEl) uniEl.textContent = s.university || "—";
         if (majorEl) majorEl.textContent = s.major || "—";
+        if (s.userId) CURRENT_USER_ID = s.userId;
         return s;
       } catch (err) {
         console.error(err);
@@ -526,48 +551,6 @@
       rows.slice(1).forEach((r) => r.remove());
     }
 
-    async function loadRoadmapHistory() {
-      const table = document.getElementById("jobsTable");
-      if (!table) return;
-
-      clearDynamicRows(table);
-
-      try {
-        const res = await fetch("/api/roadmaps/me", { headers: authHeaders() });
-        if (!res.ok) throw new Error("Failed to load roadmaps");
-        const list = await res.json();
-
-        if (!Array.isArray(list) || list.length === 0) {
-          const emptyRow = document.createElement("div");
-          emptyRow.className = "row jobs";
-          emptyRow.innerHTML = `
-            <div class="muted">—</div>
-            <div class="muted">No roadmaps yet</div>
-            <div class="muted">—</div>
-          `;
-          table.appendChild(emptyRow);
-          return;
-        }
-
-        list.forEach((rm) => {
-          const row = document.createElement("div");
-          row.className = "row jobs";
-
-          const jobId = rm.job_id ?? rm.id ?? rm.jobId;
-          const href = jobId ? `roadmap?id=${encodeURIComponent(jobId)}` : "roadmap";
-
-          row.innerHTML = `
-            <div>${rm.company ?? "—"}</div>
-            <div>${rm.role ?? "—"}</div>
-            <div><a class="btn-pill" href="${href}">View</a></div>
-          `;
-
-          table.appendChild(row);
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }
 
     async function loadApplications() {
       const table = document.getElementById("statusTable");
@@ -588,9 +571,10 @@
           const emptyRow = document.createElement("div");
           emptyRow.className = "row";
           emptyRow.innerHTML = `
-              <div class="muted">—</div>
+              <div class="muted">--</div>
               <div class="muted">No applications yet</div>
-              <div class="muted">—</div>
+              <div class="muted">--</div>
+              <div></div>
             `;
           table.appendChild(emptyRow);
           return;
@@ -603,17 +587,36 @@
           const status = app.status || "pending";
 
           row.innerHTML = `
-              <div>${app.company ?? "—"}</div>
-              <div>${app.role ?? "—"}</div>
+              <div>${app.company ?? "--"}</div>
+              <div>${app.role ?? "--"}</div>
               <div>
                 <span class="status-pill ${statusClass(status)}">
                   ${titleCase(status)}
                 </span>
               </div>
+              ${
+                app.job_id
+                  ? `<a class="link-btn" href="/job?id=${encodeURIComponent(app.job_id)}" aria-label="View job">
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path d="M10 13a5 5 0 0 1 0-7l1.5-1.5a5 5 0 0 1 7 7L17 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 11a5 5 0 0 1 0 7L12.5 19.5a5 5 0 0 1-7-7L7 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </a>`
+                  : `<span></span>`
+              }
             `;
           table.appendChild(row);
         });
       } catch (err) {
+        const emptyRow = document.createElement("div");
+        emptyRow.className = "row";
+        emptyRow.innerHTML = `
+              <div class="muted">--</div>
+              <div class="muted">Unable to load applications</div>
+              <div class="muted">--</div>
+              <div></div>
+            `;
+        table.appendChild(emptyRow);
         console.error(err);
       }
     }
@@ -630,9 +633,9 @@
           const emptyRow = document.createElement("div");
           emptyRow.className = "row jobs";
           emptyRow.innerHTML = `
-            <div class="muted">â€”</div>
+            <div class="muted">--</div>
             <div class="muted">No roadmaps yet</div>
-            <div class="muted">â€”</div>
+            <div class="muted">--</div>
           `;
           table.appendChild(emptyRow);
           return;
@@ -646,8 +649,8 @@
           const href = jobId ? `roadmap?id=${encodeURIComponent(jobId)}` : "roadmap";
 
           row.innerHTML = `
-            <div>${rm.company ?? "â€”"}</div>
-            <div>${rm.role ?? "â€”"}</div>
+            <div>${rm.company ?? "--"}</div>
+            <div>${rm.role ?? "--"}</div>
             <div><a class="btn-pill" href="${href}">View</a></div>
           `;
 
@@ -889,3 +892,7 @@
 </body>
 
 </html>
+
+
+
+

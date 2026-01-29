@@ -273,6 +273,7 @@ def get_applications_for_student(student_id: int):
             {
                 "application_id": safe_int(r.get("id")),
                 "company": (company.get("name") or "—"),
+                "job_id": safe_int(r.get("job_id")),
                 "role": (job.get("title") or "—"),
                 "status": (r.get("status") or "pending"),
                 "created_at": created.isoformat() if created else None,

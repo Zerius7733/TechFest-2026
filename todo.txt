@@ -1,7 +1,7 @@
 TODO:
 - money convertion / cleaning of data
 - email noti 
-- sign up 
+- sign up with email otp
 - query doesnt retain   
 - search engine modifying
 - login prompt at existing resume
@@ -10,6 +10,7 @@ TODO:
 - roadmap interaction changed after application
 - resume db overloading
 WORKING ON: 
+
 
 DONE:
 - employer profile static 2 dynamic (DONE)
@@ -30,3 +31,4 @@ DONE:
 
 - reupload, delete, view resume , student profile (DONE) 
 - apply ui interaction ( no login prompt , str to road map) (DONE)
+- link icon on student applications row (DONE)
