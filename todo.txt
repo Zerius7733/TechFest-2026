@@ -1,5 +1,4 @@
 TODO:
--applications (writing n reading) db side, from job listing
 - apply ui interaction ( no login prompt , str to road map)
 - money convertion
 - email noti 
@@ -11,6 +10,15 @@ TODO:
 - % match ui under roadmap section, studenet profile
 
 WORKING ON: 
+-applications (writing n reading) db side, from job listing
+notes: after clicking apply:
+if logged in: 
+    if resume: 
+        apply using resume
+    else: 
+        prompt user to upload resume ( new ui to upload ? or jus pop out window to submit resume?) 
+else:
+    prompt user to log in
 
 DONE:
 - employer profile static 2 dynamic (DONE)
