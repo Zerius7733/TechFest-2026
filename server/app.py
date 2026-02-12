@@ -410,3 +410,9 @@ def student_profile_page():
 @app.get("/employer_profile")
 def employer_profile_page():
     return FileResponse(os.path.join(FRONTEND_DIR, "employer_profile.html"))
+
+
+#uvicorn <python_file_without_.py>:<FastAPI_app_variable> --reload --host x.x.x.x --port x.x.x.x
+# python file relative path: server/app.py
+# FastAPI app variable: app
+# --host 0.0.0.0 --port 8000
