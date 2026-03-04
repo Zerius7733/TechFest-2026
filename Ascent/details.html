@@ -151,6 +151,9 @@
             gap: 12px;
             flex-wrap: wrap;
         }
+        .actions .push-right {
+            margin-left: auto;
+        }
 
         .btn {
             display: inline-flex;
@@ -169,6 +172,80 @@
 
         .btn.primary {
             border-color: rgba(0, 0, 0, 0.18);
+        }
+
+        /* Auth modal (tabbar prompt) */
+        .auth-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            z-index: 10000;
+        }
+
+        .auth-modal.open {
+            display: block;
+        }
+
+        .auth-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+        }
+
+        .auth-card {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: min(420px, 92vw);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.20);
+            border-radius: 18px;
+            padding: 18px;
+        }
+
+        .auth-title {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .auth-text {
+            margin: 0 0 14px 0;
+            color: rgba(0, 0, 0, 0.65);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .auth-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .auth-btn {
+            appearance: none;
+            border: 0;
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .auth-primary {
+            background: #111;
+            color: #fff;
+        }
+
+        .auth-secondary {
+            background: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.75);
         }
 
         .error {
@@ -220,12 +297,27 @@
 
 
                 <div class="actions">
-                    <a class="btn primary" id="applyLink" href="#" target="_blank" rel="noreferrer noopener">Apply</a>
-                    <a class="btn" href="#" id="backBtn">Back to results</a>
+                    <a class="btn primary" id="applylink" href="" target="_blank" rel="noreferrer noopener">Apply</a>
+                    <a class="btn primary" id="roadmapLink" href="#">Roadmap</a>
+                    <a class="btn push-right" href="#" id="backBtn">Back to results</a>
 
                 </div>
 
                 <div class="error" id="errorBox" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="auth-modal" id="authModal" aria-hidden="true">
+        <div class="auth-backdrop" data-close="1"></div>
+        <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+            <h2 id="authTitle" class="auth-title">Login required</h2>
+            <p class="auth-text">Please log in or sign up to access this section.</p>
+            <div class="auth-actions">
+                <button type="button" class="auth-btn auth-secondary" id="authCloseBtn">Cancel</button>
+                <a class="auth-btn auth-primary" id="authLoginBtn" href="/login">Log in</a>
+                <a class="auth-btn auth-primary" id="authSignupBtn" href="/signup">Sign up</a>
             </div>
         </div>
     </div>
@@ -255,6 +347,34 @@
             pill.textContent = text;
             container.appendChild(pill);
         }
+
+        // Basic auth flag (placeholder for future real auth)
+        function isLoggedIn() {
+            return !!localStorage.getItem("AUTH_TOKEN");
+        }
+
+        const authModal = document.getElementById("authModal");
+        const authCloseBtn = document.getElementById("authCloseBtn");
+
+        function openAuthModal() {
+            if (!authModal) return;
+            authModal.classList.add("open");
+            authModal.setAttribute("aria-hidden", "false");
+        }
+
+        function closeAuthModal() {
+            if (!authModal) return;
+            authModal.classList.remove("open");
+            authModal.setAttribute("aria-hidden", "true");
+        }
+
+        if (authCloseBtn) authCloseBtn.addEventListener("click", closeAuthModal);
+        document.addEventListener("click", (e) => {
+            const t = e.target;
+            if (t && t.getAttribute && t.getAttribute("data-close") === "1") {
+                closeAuthModal();
+            }
+        });
         let FULL_DESCRIPTION = "";
         let DESC_EXPANDED = false;
         const DESC_PREVIEW_LEN = 600; // adjust to taste
@@ -337,7 +457,7 @@
                 metaRow.style.display = hasMeta ? "flex" : "none";
 
                 // Apply link -> go to internal upload page
-                const applyLink = document.getElementById("applyLink");
+                const applyLink = document.getElementById("applylink");
                 if (applyLink) {
                 const q = qs("q") || "";
                 const params = new URLSearchParams();
@@ -347,6 +467,17 @@
                 applyLink.href = `/apply?${params.toString()}`;
                 applyLink.removeAttribute("target");
                 applyLink.removeAttribute("rel");
+                }
+
+                // Roadmap link -> job-specific roadmap
+                const roadmapLink = document.getElementById("roadmapLink");
+                if (roadmapLink) {
+                const q = qs("q") || "";
+                const params = new URLSearchParams();
+                params.set("id", String(jobId));
+                if (q) params.set("q", q);
+
+                roadmapLink.href = `/roadmap?${params.toString()}`;
                 }
 
             } catch (err) {
@@ -366,6 +497,17 @@
                     window.location.href = `/results?q=${encodeURIComponent(q)}`;
                 } else {
                     window.location.href = "/results";
+                }
+            });
+        }
+
+        // Apply button should require login
+        const applyBtn = document.getElementById("applylink");
+        if (applyBtn) {
+            applyBtn.addEventListener("click", (e) => {
+                if (!isLoggedIn()) {
+                    e.preventDefault();
+                    openAuthModal();
                 }
             });
         }

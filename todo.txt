@@ -1,0 +1,34 @@
+TODO:
+- money convertion / cleaning of data
+- email noti 
+- sign up with email otp
+- query doesnt retain   
+- search engine modifying
+- login prompt at existing resume
+- % match ui under roadmap section, studenet profile 
+- studenet profile ui animation (least priority)
+- roadmap interaction changed after application
+- resume db overloading
+WORKING ON: 
+
+
+DONE:
+- employer profile static 2 dynamic (DONE)
+- employer applications status update to csv db (write) from employer side (DONE)
+- roadmap UI, "back to details" , with q value and job id (DONE)
+- student user profile able to view own resume after uploading (DONE)
+- roadmap caching (DONE)
+- employer side must be able to view the applicants resume (DONE)
+- applications (writing n reading) db side, from job listing
+    notes: after clicking apply:
+    if logged in: 
+        if resume: 
+            apply using resume (DONE)
+        else: 
+            prompt user to upload resume ( new ui to upload ? or jus pop out window to submit resume?) (kinda done)
+    else:
+        prompt user to log in (done)
+
+- reupload, delete, view resume , student profile (DONE) 
+- apply ui interaction ( no login prompt , str to road map) (DONE)
+- link icon on student applications row (DONE)

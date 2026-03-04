@@ -156,6 +156,73 @@
         display: none;
       }
 
+      /* Success modal */
+      .success-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        z-index: 10000;
+      }
+
+      .success-modal.open {
+        display: block;
+      }
+
+      .success-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+      }
+
+      .success-card {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(420px, 92vw);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.2);
+        border-radius: 18px;
+        padding: 18px;
+        text-align: center;
+      }
+
+      .success-title {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .success-text {
+        margin: 0 0 16px 0;
+        color: rgba(0, 0, 0, 0.65);
+        font-size: 14px;
+        line-height: 1.4;
+      }
+
+      .success-btn {
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 800;
+        background: #111;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      .error-modal .success-card {
+        border-color: rgba(176, 0, 32, 0.18);
+      }
+
+      .error-modal .success-title {
+        color: #b00020;
+      }
+
       /* Floating Tab Bar */
       .tabbar {
         position: fixed;
@@ -240,17 +307,36 @@
       </div>
     </div>
 
+    <!-- Success Modal -->
+    <div class="success-modal" id="successModal" aria-hidden="true">
+      <div class="success-backdrop" data-close="1"></div>
+      <div class="success-card" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+        <h2 id="successTitle" class="success-title">Application submitted</h2>
+        <p class="success-text">Your application has been recorded successfully.</p>
+        <button type="button" class="success-btn" id="successCloseBtn">OK</button>
+      </div>
+    </div>
+
+    <div class="success-modal error-modal" id="errorModal" aria-hidden="true">
+      <div class="success-backdrop" data-close="1"></div>
+      <div class="success-card" role="dialog" aria-modal="true" aria-labelledby="errorTitle">
+        <h2 id="errorTitle" class="success-title">Duplicate application</h2>
+        <p class="success-text">You have already applied for this job.</p>
+        <button type="button" class="success-btn" id="errorCloseBtn">OK</button>
+      </div>
+    </div>
+
       <!-- Floating Tab Bar -->
       <nav class="tabbar" aria-label="Primary">
         <a href="/" data-tab="home">
           <span class="icon">🏠</span>
           <span>Home</span>
         </a>
-        <a href="/results" data-tab="jobs">
+        <a href="/results" data-tab="jobs" class="active">
           <span class="icon">💼</span>
           <span>Listings</span>
         </a>
-        <a href="/optimize" data-tab="optimize" class="active">
+        <a href="/optimize" data-tab="optimize">
           <span class="icon">📄</span>
           <span>Optimize</span>
         </a>
@@ -285,6 +371,66 @@
         el.textContent = "";
       }
 
+      function getToken() {
+        return localStorage.getItem("AUTH_TOKEN") || "";
+      }
+
+      function authHeaders() {
+        const t = getToken();
+        return t ? { Authorization: `Bearer ${t}` } : {};
+      }
+
+      let CURRENT_USER_ID = null;
+      async function getCurrentUserId() {
+        if (CURRENT_USER_ID) return CURRENT_USER_ID;
+        const res = await fetch("/api/auth/me", { headers: authHeaders() });
+        if (!res.ok) {
+          throw new Error("Please log in to apply.");
+        }
+        const data = await res.json();
+        CURRENT_USER_ID = data.userId;
+        return CURRENT_USER_ID;
+      }
+
+      const successModal = document.getElementById("successModal");
+      const successCloseBtn = document.getElementById("successCloseBtn");
+      const errorModal = document.getElementById("errorModal");
+      const errorCloseBtn = document.getElementById("errorCloseBtn");
+
+      function openSuccessModal() {
+        if (!successModal) return;
+        successModal.classList.add("open");
+        successModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeSuccessModal() {
+        if (!successModal) return;
+        successModal.classList.remove("open");
+        successModal.setAttribute("aria-hidden", "true");
+      }
+
+      function openErrorModal() {
+        if (!errorModal) return;
+        errorModal.classList.add("open");
+        errorModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeErrorModal() {
+        if (!errorModal) return;
+        errorModal.classList.remove("open");
+        errorModal.setAttribute("aria-hidden", "true");
+      }
+
+      if (successCloseBtn) successCloseBtn.addEventListener("click", closeSuccessModal);
+      if (errorCloseBtn) errorCloseBtn.addEventListener("click", closeErrorModal);
+      document.addEventListener("click", (e) => {
+        const t = e.target;
+        if (t && t.getAttribute && t.getAttribute("data-close") === "1") {
+          closeSuccessModal();
+          closeErrorModal();
+        }
+      });
+
       const jobId = qs("id");
       const q = qs("q");
 
@@ -298,6 +444,10 @@
             params.set("id", jobId);
             if (q) params.set("q", q);
             window.location.href = `/job?${params.toString()}`;
+            return;
+          }
+          if (q) {
+            window.location.href = `/results?q=${encodeURIComponent(q)}`;
             return;
           }
           window.location.href = "/results";
@@ -316,45 +466,54 @@
         if (fileInput) fileInput.click();
       }
 
-      async function uploadSelectedFile() {
+      async function applyWithFile(file) {
         clearError();
-
-        const file = fileInput && fileInput.files ? fileInput.files[0] : null;
-        if (!file) return;
 
         setStatus("Uploading...");
         if (pill) pill.style.pointerEvents = "none";
 
         try {
+          const userId = await getCurrentUserId();
           const form = new FormData();
-          form.append("file", file);
+          form.append("resume", file);
 
-          const res = await fetch(`/api/resume/ocr-skill-gap?job_id=${encodeURIComponent(jobId)}`, {
-            method: "POST",
-            body: form,
-          });
+          const res = await fetch(
+            `/api/applications/apply?job_id=${encodeURIComponent(jobId)}&user_id=${encodeURIComponent(userId)}`,
+            {
+              method: "POST",
+              headers: {
+                ...authHeaders(),
+              },
+              body: form,
+            }
+          );
 
           const data = await res.json().catch(() => ({}));
 
           if (!res.ok) {
             const detail = data && data.detail ? String(data.detail) : `HTTP ${res.status}`;
+            if (res.status === 409 || /duplicate/i.test(detail)) {
+              setStatus("");
+              openErrorModal();
+              return;
+            }
             throw new Error(detail);
           }
 
-          sessionStorage.setItem("SKILL_GAP_RESULT", JSON.stringify(data));
-          sessionStorage.setItem("SKILL_GAP_JOB_ID", jobId);
-          localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(data));
-          window.location.href = "/roadmap.html";
-          return;
-
-          // Later: redirect to match page
-          // window.location.href = `/match?id=${encodeURIComponent(jobId)}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+          setStatus("Application submitted.");
+          openSuccessModal();
         } catch (err) {
           setStatus("");
           showError(err.message || "Upload failed.");
         } finally {
           if (pill) pill.style.pointerEvents = "auto";
         }
+      }
+
+      async function uploadSelectedFile() {
+        const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+        if (!file) return;
+        await applyWithFile(file);
       }
 
       if (pill) {
@@ -371,9 +530,34 @@
       const useExistingPill = document.getElementById("useExistingPill");
 
       if (useExistingPill) {
-        useExistingPill.addEventListener("click", () => {
+        useExistingPill.addEventListener("click", async () => {
           clearError();
-          showError("No resume has been uploaded yet. Please upload one first.");
+          if (!jobId) {
+            showError("Missing job id in URL. Expected /apply?id=<job_id>");
+            return;
+          }
+          try {
+            setStatus("Using existing resume...");
+            const res = await fetch("/api/resume/me", { headers: authHeaders() });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data || !data.has_resume || !data.file_url) {
+              throw new Error("No resume has been uploaded yet.");
+            }
+
+            const fileRes = await fetch(data.file_url);
+            if (!fileRes.ok) {
+              throw new Error("Failed to load stored resume.");
+            }
+
+            const blob = await fileRes.blob();
+            const filename = data.resume_name || "resume.pdf";
+            const file = new File([blob], filename, { type: blob.type || "application/pdf" });
+
+            await applyWithFile(file);
+          } catch (err) {
+            setStatus("");
+            showError(err.message || "No resume has been uploaded yet.");
+          }
         });
       }
 

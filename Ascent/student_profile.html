@@ -153,7 +153,7 @@
 
     .row {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 0.7fr;
+      grid-template-columns: 1.2fr 1fr 0.6fr 44px;
       gap: 12px;
       align-items: center;
       padding: 16px 18px;
@@ -208,6 +208,21 @@
     /* Job listing table (Company, Role, Action) */
     .row.jobs {
       grid-template-columns: 1.2fr 1fr 0.7fr;
+    }
+
+    .link-btn {
+      justify-self: start;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: rgba(0, 0, 0, 0.06);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 16px;
+      color: inherit;
     }
 
     .btn-pill {
@@ -278,6 +293,122 @@
     .tabbar a:hover {
       background: rgba(0, 0, 0, 0.06);
     }
+
+    .action-card {
+      margin-top: 18px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .action-card .action-btn {
+      border: 0;
+      background: transparent;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(680px, 92vw);
+      background: var(--card);
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .modal-title {
+      margin: 0 0 10px;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .modal-meta {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .resume-box {
+      width: 100%;
+      height: 60vh;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .modal-btn {
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .modal-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: inherit;
+      text-decoration: none;
+      opacity: 0.8;
+    }
+
+    .action-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .resume-action-btn {
+      border: 1px solid rgba(0, 0, 0, 0.16);
+      background: rgba(0, 0, 0, 0.06);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .resume-action-btn.primary {
+      background: #111;
+      color: #fff;
+      border-color: #111;
+    }
+
+    .resume-action-btn.danger {
+      color: #b00020;
+    }
+
+    .action-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
   </style>
 </head>
 
@@ -305,16 +436,12 @@
         </div>
       </div>
 
-      <div class="card" style="margin-top:18px; padding:18px; text-align:center;">
-        <button id="logoutBtn" style="
-                  border:0;
-                  background:transparent;
-                  font-size:16px;
-                  font-weight:800;
-                  cursor:pointer;
-                ">
-          Logout
-        </button>
+      <div class="card action-card">
+        <button id="resumeBtn" class="action-btn">Resume</button>
+      </div>
+
+      <div class="card action-card">
+        <button id="logoutBtn" class="action-btn">Logout</button>
       </div>
 
     </aside>
@@ -329,6 +456,7 @@
             <div>Company Name</div>
             <div>Role</div>
             <div>Status</div>
+            <div></div>
           </div>
           <!-- rows inserted by JS -->
         </div>
@@ -343,7 +471,7 @@
           <div class="row header jobs">
             <div>Company Name</div>
             <div>Role</div>
-            <div></div>
+            <div>Roadmap</div>
           </div>
           <!-- rows inserted by JS -->
         </div>
@@ -352,6 +480,7 @@
   </div>
 
   <script>
+    window.addEventListener("DOMContentLoaded", () => {
 
     function getToken() {
       return localStorage.getItem("AUTH_TOKEN") || "";
@@ -362,12 +491,23 @@
       return t ? { Authorization: `Bearer ${t}` } : {};
     }
 
-
-    function authHeaders() {
-      const t = getToken();
-      return t ? { Authorization: `Bearer ${t}` } : {};
+    function safeJsonParse(raw, fallback) {
+      try {
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
     }
 
+    let CURRENT_USER_ID = null;
+    async function getCurrentUserId() {
+      if (CURRENT_USER_ID) return CURRENT_USER_ID;
+      const res = await fetch("/api/auth/me", { headers: authHeaders() });
+      if (!res.ok) throw new Error("Not logged in");
+      const data = await res.json();
+      CURRENT_USER_ID = data.userId;
+      return CURRENT_USER_ID;
+    }
 
     async function loadStudentProfile() {
       try {
@@ -387,6 +527,7 @@
         if (emailEl) emailEl.textContent = s.email || "—";
         if (uniEl) uniEl.textContent = s.university || "—";
         if (majorEl) majorEl.textContent = s.major || "—";
+        if (s.userId) CURRENT_USER_ID = s.userId;
         return s;
       } catch (err) {
         console.error(err);
@@ -410,49 +551,6 @@
       rows.slice(1).forEach((r) => r.remove());
     }
 
-    function safeJsonParse(raw, fallback) {
-      try {
-        return raw ? JSON.parse(raw) : fallback;
-      } catch {
-        return fallback;
-      }
-    }
-
-    function loadRoadmapHistory() {
-      const table = document.getElementById("jobsTable");
-      if (!table) return;
-
-      clearDynamicRows(table);
-
-      // Hardcode the first row of the roadmap
-  const firstRow = document.createElement("div");
-  firstRow.className = "row jobs";
-  firstRow.innerHTML = `
-    <div>SES</div>
-    <div>(Senior) Engineer, Software Engineering Solutions, Quantum Key Distribution</div>
-    <div><a class="btn-pill" href="roadmap.html?id=123">View</a></div>
-  `;
-  table.appendChild(firstRow);
-
-      const list = safeJsonParse(localStorage.getItem("ASCENT_ROADMAPS"), []);
-
-
-      list.forEach((rm) => {
-        const row = document.createElement("div");
-        row.className = "row jobs";
-
-        const jobId = rm.job_id ?? rm.id ?? rm.jobId;
-        const href = jobId ? `roadmap.html?id=${encodeURIComponent(jobId)}` : "roadmap.html";
-
-        row.innerHTML = `
-          <div>${rm.company ?? "—"}</div>
-          <div>${rm.role ?? "—"}</div>
-          <div><a class="btn-pill" href="${href}">View</a></div>
-        `;
-
-        //table.appendChild(row);
-      });
-    }
 
     async function loadApplications() {
       const table = document.getElementById("statusTable");
@@ -461,10 +559,11 @@
       clearDynamicRows(table);
 
       try {
-        const me = await loadStudentProfile();
-        if (!me) throw new Error("Not logged in / profile not found");
-
-        const res = await fetch(`/api/applications/student/${encodeURIComponent(me.userId)}`);
+        const userId = await getCurrentUserId();
+        const res = await fetch(
+          `/api/applications/student/${encodeURIComponent(userId)}`,
+          { headers: authHeaders() }
+        );
         if (!res.ok) throw new Error("Failed to load applications");
         const data = await res.json();
 
@@ -472,9 +571,10 @@
           const emptyRow = document.createElement("div");
           emptyRow.className = "row";
           emptyRow.innerHTML = `
-              <div class="muted">—</div>
+              <div class="muted">--</div>
               <div class="muted">No applications yet</div>
-              <div class="muted">—</div>
+              <div class="muted">--</div>
+              <div></div>
             `;
           table.appendChild(emptyRow);
           return;
@@ -487,33 +587,244 @@
           const status = app.status || "pending";
 
           row.innerHTML = `
-              <div>${app.company ?? "—"}</div>
-              <div>${app.role ?? "—"}</div>
+              <div>${app.company ?? "--"}</div>
+              <div>${app.role ?? "--"}</div>
               <div>
                 <span class="status-pill ${statusClass(status)}">
                   ${titleCase(status)}
                 </span>
               </div>
+              ${
+                app.job_id
+                  ? `<a class="link-btn" href="/job?id=${encodeURIComponent(app.job_id)}" aria-label="View job">
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path d="M10 13a5 5 0 0 1 0-7l1.5-1.5a5 5 0 0 1 7 7L17 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 11a5 5 0 0 1 0 7L12.5 19.5a5 5 0 0 1-7-7L7 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </a>`
+                  : `<span></span>`
+              }
             `;
           table.appendChild(row);
         });
       } catch (err) {
+        const emptyRow = document.createElement("div");
+        emptyRow.className = "row";
+        emptyRow.innerHTML = `
+              <div class="muted">--</div>
+              <div class="muted">Unable to load applications</div>
+              <div class="muted">--</div>
+              <div></div>
+            `;
+        table.appendChild(emptyRow);
         console.error(err);
+      }
+    }
+
+    // Override with a fallback that uses localStorage when server returns empty
+    async function loadRoadmapHistory() {
+      const table = document.getElementById("jobsTable");
+      if (!table) return;
+
+      clearDynamicRows(table);
+
+      function renderRows(list) {
+        if (!Array.isArray(list) || list.length === 0) {
+          const emptyRow = document.createElement("div");
+          emptyRow.className = "row jobs";
+          emptyRow.innerHTML = `
+            <div class="muted">--</div>
+            <div class="muted">No roadmaps yet</div>
+            <div class="muted">--</div>
+          `;
+          table.appendChild(emptyRow);
+          return;
+        }
+
+        list.forEach((rm) => {
+          const row = document.createElement("div");
+          row.className = "row jobs";
+
+          const jobId = rm.job_id ?? rm.id ?? rm.jobId;
+          const href = jobId ? `roadmap?id=${encodeURIComponent(jobId)}` : "roadmap";
+
+          row.innerHTML = `
+            <div>${rm.company ?? "--"}</div>
+            <div>${rm.role ?? "--"}</div>
+            <div><a class="btn-pill" href="${href}">View</a></div>
+          `;
+
+          table.appendChild(row);
+        });
+      }
+
+      try {
+        const res = await fetch("/api/roadmaps/me", { headers: authHeaders() });
+        if (!res.ok) throw new Error("Failed to load roadmaps");
+        const list = await res.json();
+
+        if (Array.isArray(list) && list.length > 0) {
+          renderRows(list);
+          return;
+        }
+
+        const localList = safeJsonParse(localStorage.getItem("ASCENT_ROADMAPS"), []);
+        renderRows(localList);
+      } catch (err) {
+        console.error(err);
+        const localList = safeJsonParse(localStorage.getItem("ASCENT_ROADMAPS"), []);
+        renderRows(localList);
       }
     }
 
     loadStudentProfile().then(() => loadApplications());
     loadRoadmapHistory();
 
-    // Hardcode the first row of the roadmap
-  const firstRow = document.createElement("div");
-  firstRow.className = "row jobs";
-  firstRow.innerHTML = `
-    <div>Compaxdcgfhvjbny Name 1</div>
-    <div>Role 1</div>
-    <div><a class="btn-pill" href="roadmap.html?id=123">View</a></div>
-  `;
-  //table.appendChild(firstRow);
+    const resumeBtn = document.getElementById("resumeBtn");
+    const resumeOverlay = document.getElementById("resumeOverlay");
+    const resumeFrameEl = document.getElementById("resumeFrame");
+    const resumeMetaEl = document.getElementById("resumeMeta");
+    const resumeCloseBtn = document.getElementById("resumeCloseBtn");
+    const resumeOpenLink = document.getElementById("resumeOpenLink");
+    const resumeActionOverlay = document.getElementById("resumeActionOverlay");
+    const resumeActionCloseBtn = document.getElementById("resumeActionCloseBtn");
+    const resumeViewBtn = document.getElementById("resumeViewBtn");
+    const resumeUploadBtn = document.getElementById("resumeUploadBtn");
+    const resumeDeleteBtn = document.getElementById("resumeDeleteBtn");
+    const resumeActionNote = document.getElementById("resumeActionNote");
+    const resumeFileInput = document.getElementById("resumeFileInput");
+
+    function openResumeModal() {
+      if (resumeOverlay) resumeOverlay.classList.add("open");
+    }
+
+    function closeResumeModal() {
+      if (resumeOverlay) resumeOverlay.classList.remove("open");
+    }
+
+    function showResumeFromStorage() {
+      fetch("/api/resume/me", { headers: authHeaders() })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data || !data.has_resume || !data.file_url) {
+            alert("No resume uploaded yet.");
+            return;
+          }
+
+          if (resumeFrameEl) resumeFrameEl.src = data.file_url;
+          if (resumeOpenLink) resumeOpenLink.href = data.file_url;
+          if (resumeMetaEl) {
+            const parts = [];
+            if (data.resume_name) parts.push(data.resume_name);
+            if (data.resume_uploaded_at) {
+              parts.push(`Uploaded: ${new Date(data.resume_uploaded_at).toLocaleString()}`);
+            }
+            resumeMetaEl.textContent = parts.join(" • ");
+          }
+          // Open in a new tab first (more reliable than iframe PDF rendering)
+          window.open(data.file_url, "_blank", "noopener");
+          openResumeModal();
+        })
+        .catch(() => {
+          alert("No resume uploaded yet.");
+        });
+    }
+
+    function openResumeActionModal() {
+      if (resumeActionOverlay) resumeActionOverlay.classList.add("open");
+      if (resumeActionNote) resumeActionNote.textContent = "";
+    }
+
+    function closeResumeActionModal() {
+      if (resumeActionOverlay) resumeActionOverlay.classList.remove("open");
+      if (resumeFileInput) resumeFileInput.value = "";
+    }
+
+    async function uploadResumeFile(file) {
+      if (!file) return;
+      if (resumeActionNote) resumeActionNote.textContent = "Uploading...";
+      try {
+        const fd = new FormData();
+        fd.append("resume", file);
+        const res = await fetch("/api/resume/upload", {
+          method: "POST",
+          headers: { ...authHeaders() },
+          body: fd,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail = data && data.detail ? String(data.detail) : "Upload failed.";
+          throw new Error(detail);
+        }
+        if (resumeActionNote) resumeActionNote.textContent = "Resume updated.";
+      } catch (err) {
+        if (resumeActionNote) resumeActionNote.textContent = err.message || "Upload failed.";
+      }
+    }
+
+    async function deleteResume() {
+      if (resumeActionNote) resumeActionNote.textContent = "Deleting...";
+      try {
+        const res = await fetch("/api/resume/me", {
+          method: "DELETE",
+          headers: { ...authHeaders() },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail = data && data.detail ? String(data.detail) : "Delete failed.";
+          throw new Error(detail);
+        }
+        if (resumeActionNote) resumeActionNote.textContent = "Resume deleted.";
+      } catch (err) {
+        if (resumeActionNote) resumeActionNote.textContent = err.message || "Delete failed.";
+      }
+    }
+
+    if (resumeBtn) {
+      resumeBtn.addEventListener("click", openResumeActionModal);
+    }
+
+    if (resumeActionCloseBtn) {
+      resumeActionCloseBtn.addEventListener("click", closeResumeActionModal);
+    }
+
+    if (resumeActionOverlay) {
+      resumeActionOverlay.addEventListener("click", (e) => {
+        if (e.target === resumeActionOverlay) closeResumeActionModal();
+      });
+    }
+
+    if (resumeViewBtn) {
+      resumeViewBtn.addEventListener("click", showResumeFromStorage);
+    }
+
+    if (resumeUploadBtn) {
+      resumeUploadBtn.addEventListener("click", () => {
+        if (resumeFileInput) resumeFileInput.click();
+      });
+    }
+
+    if (resumeFileInput) {
+      resumeFileInput.addEventListener("change", () => {
+        const file = resumeFileInput.files && resumeFileInput.files[0];
+        uploadResumeFile(file);
+      });
+    }
+
+    if (resumeDeleteBtn) {
+      resumeDeleteBtn.addEventListener("click", deleteResume);
+    }
+
+    if (resumeCloseBtn) {
+      resumeCloseBtn.addEventListener("click", closeResumeModal);
+    }
+
+    if (resumeOverlay) {
+      resumeOverlay.addEventListener("click", (e) => {
+        if (e.target === resumeOverlay) closeResumeModal();
+      });
+    }
+
     // Logout behavior (same as employer profile)
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
@@ -524,57 +835,7 @@
       });
     }
 
-    async function loadApplications() {
-      const table = document.getElementById("statusTable");
-      if (!table) return;
-
-      clearDynamicRows(table);
-
-      try {
-        const me = await loadStudentProfile();
-        if (!me) throw new Error("Not logged in / profile not found");
-
-        const res = await fetch(`/api/applications/student/${encodeURIComponent(me.userId)}`);
-        if (!res.ok) throw new Error("Failed to load applications");
-        const data = await res.json();
-
-        if (!Array.isArray(data) || data.length === 0) {
-          const emptyRow = document.createElement("div");
-          emptyRow.className = "row";
-          emptyRow.innerHTML = `
-                  <div class="muted">—</div>
-                  <div class="muted">No applications yet</div>
-                  <div class="muted">—</div>
-              `;
-          table.appendChild(emptyRow);
-          return;
-        }
-
-        data.forEach((app) => {
-          const row = document.createElement("div");
-          row.className = "row";
-
-          const status = app.status || "pending";
-
-          row.innerHTML = `
-                  <div>${app.company ?? "—"}</div>
-                  <div>${app.role ?? "—"}</div>
-                  <div>
-                      <span class="status-pill ${statusClass(status)}">
-                          ${titleCase(status)}
-                      </span>
-                  </div>
-              `;
-          table.appendChild(row);
-        });
-      } catch (err) {
-        console.error(err);
-      }
-  }
-  //loadApplications();
-
-
-
+    });
   </script>
 
   <!-- Floating Tab Bar -->
@@ -597,6 +858,41 @@
     </a>
   </nav>
 
+  <!-- Resume Modal -->
+  <div class="overlay" id="resumeOverlay" role="dialog" aria-modal="true" aria-labelledby="resumeTitle">
+    <div class="modal">
+      <h3 class="modal-title" id="resumeTitle">Uploaded Resume</h3>
+      <p class="modal-meta" id="resumeMeta"></p>
+      <iframe class="resume-box" id="resumeFrame" title="Resume preview"></iframe>
+      <div class="modal-actions">
+        <a class="modal-link" id="resumeOpenLink" target="_blank" rel="noopener">Open in new tab</a>
+        <button class="modal-btn" id="resumeCloseBtn" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resume Actions Modal -->
+  <div class="overlay" id="resumeActionOverlay" role="dialog" aria-modal="true" aria-labelledby="resumeActionTitle">
+    <div class="modal">
+      <h3 class="modal-title" id="resumeActionTitle">Resume</h3>
+      <p class="modal-meta">View, upload a new resume, or delete the current one.</p>
+      <div class="action-grid">
+        <button class="resume-action-btn" id="resumeViewBtn" type="button">View current resume</button>
+        <button class="resume-action-btn primary" id="resumeUploadBtn" type="button">Upload new resume</button>
+        <button class="resume-action-btn danger" id="resumeDeleteBtn" type="button">Delete resume</button>
+      </div>
+      <div class="action-note" id="resumeActionNote"></div>
+      <div class="modal-actions">
+        <button class="modal-btn" id="resumeActionCloseBtn" type="button">Close</button>
+      </div>
+      <input id="resumeFileInput" type="file" accept="application/pdf" style="display:none;" />
+    </div>
+  </div>
+
 </body>
 
 </html>
+
+
+
+

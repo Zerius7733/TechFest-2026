@@ -1,26 +1,19 @@
 import os
-import psycopg
+# import psycopg
 from typing import Dict
+from server.csv_store import load_csv, find_by_id
 
 
 def get_job_by_id(job_id: int) -> Dict[str, str]:
-    database_url = os.getenv("DATABASE_URL")
-    if not database_url:
-        raise RuntimeError("DATABASE_URL not set")
-
-    sql = """
-    SELECT title, COALESCE(description, '') as description
-    FROM jobs
-    WHERE id = %s
-    LIMIT 1;
-    """
-
-    with psycopg.connect(database_url) as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql, [job_id])
-            row = cur.fetchone()
-
+    # DB disabled. Previous query:
+    # SELECT title, COALESCE(description, '') as description FROM jobs WHERE id = %s LIMIT 1;
+    row = find_by_id(load_csv("jobs"), "id", job_id)
     if not row:
         raise KeyError(f"Job not found: {job_id}")
 
-    return {"title": row[0] or "", "description": row[1] or ""}
+    return {
+        "title": row.get("title") or "",
+        "description": row.get("description") or "",
+        "company": row.get("company") or "",
+    }
+

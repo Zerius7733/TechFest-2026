@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from passlib.context import CryptContext
 from jose import jwt
 
-from server.db import db  # adjust import to your actual db connection file
+# from server.db import db  # DB disabled
+from server.csv_store import load_csv, safe_int
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -23,7 +24,7 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
-def require_user_id(authorization: str | None) -> int:
+def require_user_id(authorization: str | None = Header(default=None)) -> int:
     if not authorization:
         raise HTTPException(status_code=401, detail="Missing Authorization header")
 
@@ -59,92 +60,90 @@ def create_access_token(payload: dict) -> str:
 def login(req: LoginRequest):
     email = req.email.strip().lower()
 
-    conn = db()
+    # DB disabled. Previous query:
+    # SELECT id, email, name, role, password_hash FROM users WHERE lower(email) = %s LIMIT 1;
+    users = load_csv("users")
+    row = None
+    for u in users:
+        if (u.get("email") or "").strip().lower() == email:
+            row = u
+            break
+
+    if not row:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    user_id = safe_int(row.get("id"))
+    db_email = row.get("email") or ""
+    name = row.get("name") or ""
+    role = row.get("role") or "student"
+    password_hash = row.get("password_hash") or ""
+
+    if not password_hash:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    ok = False
     try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT id, email, name, role, password_hash
-                FROM users
-                WHERE lower(email) = %s
-                LIMIT 1
-                """,
-                (email,),
-            )
-            row = cur.fetchone()
+        ok = pwd_context.verify(req.password, password_hash)
+    except Exception:
+        # fallback: allow plaintext match for dev DB rows
+        ok = (req.password == password_hash)
 
-        if not row:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not ok:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
-        user_id, db_email, name, role, password_hash = row
+    token = create_access_token({"sub": str(user_id), "role": role})
 
-        if not password_hash:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-
-        ok = False
-        try:
-            ok = pwd_context.verify(req.password, password_hash)
-        except Exception:
-            # fallback: allow plaintext match for dev DB rows
-            ok = (req.password == password_hash)
-
-        if not ok:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-
-        token = create_access_token({"sub": str(user_id), "role": role})
-
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "user": {
-                "id": user_id,
-                "email": db_email,
-                "name": name,
-                "role": role,
-            },
-        }
-    finally:
-        conn.close()
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user_id,
+            "email": db_email,
+            "name": name,
+            "role": role,
+        },
+    }
 
 
 @router.get("/me")
 def me(authorization: str | None = Header(default=None)):
     user_id = require_user_id(authorization)
 
-    sql_user = """
-    SELECT id, name, email, COALESCE(role,'student') as role
-    FROM users
-    WHERE id = %s
-    LIMIT 1;
-    """
+    # DB disabled. Previous query:
+    # SELECT id, name, email, COALESCE(role,'student') as role FROM users WHERE id = %s LIMIT 1;
+    users = load_csv("users")
+    profiles = load_csv("student_profiles")
+    company_profiles = load_csv("company_profiles")
 
-    with db() as conn:
-        with conn.cursor() as cur:
-            cur.execute(sql_user, [user_id])
-            u = cur.fetchone()
+    u = None
+    for user in users:
+        if safe_int(user.get("id")) == safe_int(user_id):
+            u = user
+            break
 
-            if not u:
-                raise HTTPException(status_code=401, detail="User not found")
+    if not u:
+        raise HTTPException(status_code=401, detail="User not found")
 
-            role = u[3] or "student"
-            student_id = None
-            company_id = None
+    role = u.get("role") or "student"
+    student_id = None
+    company_id = None
 
-            if role == "student":
-                cur.execute("SELECT id FROM students WHERE user_id = %s LIMIT 1;", [user_id])
-                s = cur.fetchone()
-                student_id = s[0] if s else None
+    if role == "student":
+        for p in profiles:
+            if safe_int(p.get("user_id")) == safe_int(user_id):
+                student_id = safe_int(user_id)
+                break
 
-            if role == "admin":
-                # adjust this query to match YOUR companies/admin mapping
-                cur.execute("SELECT id FROM companies WHERE admin_user_id = %s LIMIT 1;", [user_id])
-                c = cur.fetchone()
-                company_id = c[0] if c else None
+    if role == "admin":
+        for cp in company_profiles:
+            if safe_int(cp.get("user_id")) == safe_int(user_id):
+                company_id = safe_int(cp.get("company_id"))
+                break
 
     return {
-        "userId": u[0],
-        "name": u[1],
-        "email": u[2],
+        "userId": safe_int(u.get("id")),
+        "name": u.get("name"),
+        "email": u.get("email"),
         "role": role,
         "studentId": student_id,
         "companyId": company_id,

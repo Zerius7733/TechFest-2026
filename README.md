@@ -22,9 +22,15 @@ This video covers:
 *ps, currently the video has no voice over as we were too tired to record it during our hackathon. we will find time to record and reupload again in the near future.
 
 ---
+## Overview
 
-## Problem Statement
+**Problem:**  
+Fragmented career data prevents job seekers from turning information into actionable roadmaps for upskilling and employment
 
+**Goal:**  
+Closing skills gap and reducing information barriers for more effective job matching in Singapore's data-driven market.
+
+**Problem Statement:**  
 Design a unified platform or application that helps fresh graduates transform fragmented career information into personalized, actionable roadmaps for employment.
 
 ---
@@ -90,7 +96,7 @@ Ascent/
 ├── apply.html
 ├── landing.html
 ├── results.html
-├── roadmap.html
+├── roadmap
 ├── student_profile.html
 ├── employer_profile.html
 ├── optimize.html
