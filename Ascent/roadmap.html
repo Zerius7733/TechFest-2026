@@ -677,6 +677,24 @@
           } catch (err) {
             console.error(err);
           }
+
+          // No saved roadmap yet: generate one from existing uploaded resume + job_id.
+          try {
+            const genRes = await fetch(`/api/resume/ocr-skill-gap-existing?job_id=${encodeURIComponent(jobId)}`, {
+              method: "POST",
+              headers: authHeaders(),
+            });
+            const genData = await genRes.json().catch(() => ({}));
+            if (!genRes.ok) {
+              const detail = genData && genData.detail ? String(genData.detail) : "Failed to generate roadmap.";
+              throw new Error(detail);
+            }
+            localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(genData));
+            return genData;
+          } catch (err) {
+            console.error(err);
+            throw err;
+          }
         }
 
         // Fallback: last generated roadmap stored locally
@@ -706,7 +724,23 @@
       }
 
       async function render() {
-        const data = await loadRoadmapData();
+        let data;
+        try {
+          data = await loadRoadmapData();
+        } catch (err) {
+          const msg = err && err.message ? String(err.message) : "Unable to generate roadmap.";
+          $("pageTitle").textContent = "Roadmap unavailable";
+          $("pageSubtitle").textContent = msg;
+          $("matchPct").textContent = "0%";
+          $("matchedCount").textContent = "0";
+          $("missingCount").textContent = "0";
+          $("timeline").innerHTML = "";
+          $("coursesList").innerHTML = "";
+          $("missingChips").innerHTML = "";
+          $("matchedChips").innerHTML = "";
+          setDonut(0);
+          return;
+        }
 
         // Prefer the API payload's job_id to avoid mismatches with stale URL params
         const jobId = data.job_id || data.id || data.jobId || getQueryParam("id") || Date.now().toString();

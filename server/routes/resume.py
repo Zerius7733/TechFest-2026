@@ -18,6 +18,30 @@ router = APIRouter(prefix="/api/resume", tags=["resume"])
 from pydantic import BaseModel
 from server.services.course_match_services import recommend_courses_from_missing_skills
 
+RESUMES_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "resumes")
+)
+
+
+def _cleanup_user_resumes(user_id: int, keep_filename: str | None = None) -> int:
+    if not os.path.isdir(RESUMES_DIR):
+        return 0
+    prefix = f"{user_id}_"
+    removed = 0
+    for name in os.listdir(RESUMES_DIR):
+        if not name.startswith(prefix):
+            continue
+        if keep_filename and name == keep_filename:
+            continue
+        full = os.path.join(RESUMES_DIR, name)
+        try:
+            if os.path.isfile(full):
+                os.remove(full)
+                removed += 1
+        except OSError:
+            continue
+    return removed
+
 
 class CourseRecRequest(BaseModel):
     missing_skills: list[str]
@@ -76,9 +100,10 @@ async def ocr_skill_gap(
     resume_filename = None
     if authorization:
         user_id = require_user_id(authorization)
+        _cleanup_user_resumes(user_id)
         original_name = os.path.basename(file.filename or "resume.pdf")
         ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "resumes"))
+        upload_dir = RESUMES_DIR
         os.makedirs(upload_dir, exist_ok=True)
         stored_name = f"{user_id}_{ts}_{original_name}"
         #stored_name = f"{user_id}_{original_name}"
@@ -136,7 +161,7 @@ def get_my_resume(authorization: str | None = Header(default=None)):
     resume_name = (target.get("resume_name") or "").strip()
     resume_uploaded_at = (target.get("resume_uploaded_at") or "").strip()
 
-    uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "resumes"))
+    uploads_dir = RESUMES_DIR
     if not resume_path:
         return {"has_resume": False}
 
@@ -162,6 +187,7 @@ def get_my_resume(authorization: str | None = Header(default=None)):
         if latest_path:
             resume_path = os.path.join("resumes", os.path.basename(latest_path))
             target["resume_path"] = resume_path
+            _cleanup_user_resumes(user_id, keep_filename=os.path.basename(latest_path))
             if not resume_name:
                 resume_name = os.path.basename(latest_path)
                 target["resume_name"] = resume_name
@@ -177,6 +203,7 @@ def get_my_resume(authorization: str | None = Header(default=None)):
             return {"has_resume": False}
 
     clean_path = resume_path.replace("\\", "/")
+    _cleanup_user_resumes(user_id, keep_filename=os.path.basename(clean_path))
     file_url = f"/uploads/{clean_path}"
     return {
         "has_resume": True,
@@ -206,19 +233,12 @@ async def upload_resume(resume: UploadFile = File(...), authorization: str | Non
     if not target:
         raise HTTPException(status_code=404, detail="Student profile not found")
 
-    # Remove old resume if present
-    old_path = (target.get("resume_path") or "").strip()
-    if old_path:
-        abs_old = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", old_path))
-        try:
-            if os.path.exists(abs_old):
-                os.remove(abs_old)
-        except OSError:
-            pass
+    # Keep at most one file per user on disk.
+    _cleanup_user_resumes(user_id)
 
     original_name = os.path.basename(resume.filename or "resume.pdf")
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "resumes"))
+    upload_dir = RESUMES_DIR
     os.makedirs(upload_dir, exist_ok=True)
     stored_name = f"{user_id}_{ts}_{original_name}"
     file_path = os.path.join(upload_dir, stored_name)
@@ -256,16 +276,7 @@ def delete_my_resume(authorization: str | None = Header(default=None)):
     if not target:
         raise HTTPException(status_code=404, detail="Student profile not found")
 
-    resume_path = (target.get("resume_path") or "").strip()
-    removed = False
-    if resume_path:
-        abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", resume_path))
-        try:
-            if os.path.exists(abs_path):
-                os.remove(abs_path)
-                removed = True
-        except OSError:
-            pass
+    removed = _cleanup_user_resumes(user_id) > 0
 
     target["resume_path"] = ""
     target["resume_name"] = ""
@@ -301,7 +312,7 @@ async def ocr_skill_gap_existing(
     if not resume_path:
         raise HTTPException(status_code=404, detail="No resume uploaded yet")
 
-    uploads_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "resumes"))
+    uploads_dir = RESUMES_DIR
     abs_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads", resume_path))
     if not os.path.exists(abs_path):
         # Fallback: find the most recent file for this user
@@ -325,6 +336,7 @@ async def ocr_skill_gap_existing(
             resume_path = os.path.join("resumes", os.path.basename(latest_path))
             abs_path = latest_path
             target["resume_path"] = resume_path
+            _cleanup_user_resumes(user_id, keep_filename=os.path.basename(latest_path))
             if not resume_name:
                 resume_name = os.path.basename(latest_path)
                 target["resume_name"] = resume_name
