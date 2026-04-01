@@ -312,7 +312,7 @@
       <div class="success-backdrop" data-close="1"></div>
       <div class="success-card" role="dialog" aria-modal="true" aria-labelledby="successTitle">
         <h2 id="successTitle" class="success-title">Application submitted</h2>
-        <p class="success-text">Your application has been recorded successfully.</p>
+        <p class="success-text" id="successText">Your application has been recorded successfully.</p>
         <button type="button" class="success-btn" id="successCloseBtn">OK</button>
       </div>
     </div>
@@ -394,8 +394,25 @@
 
       const successModal = document.getElementById("successModal");
       const successCloseBtn = document.getElementById("successCloseBtn");
+      const successTitle = document.getElementById("successTitle");
+      const successText = document.getElementById("successText");
       const errorModal = document.getElementById("errorModal");
       const errorCloseBtn = document.getElementById("errorCloseBtn");
+      const mode = qs("mode");
+      const isRoadmapMode = mode === "roadmap";
+
+      function roadmapUrl() {
+        const params = new URLSearchParams();
+        if (jobId) params.set("id", jobId);
+        if (q) params.set("q", q);
+        return `/roadmap?${params.toString()}`;
+      }
+
+      function configureModeUi() {
+        if (!isRoadmapMode) return;
+        if (successTitle) successTitle.textContent = "Roadmap generated";
+        if (successText) successText.textContent = "Your roadmap is ready. You will be redirected automatically.";
+      }
 
       function openSuccessModal() {
         if (!successModal) return;
@@ -421,7 +438,12 @@
         errorModal.setAttribute("aria-hidden", "true");
       }
 
-      if (successCloseBtn) successCloseBtn.addEventListener("click", closeSuccessModal);
+      if (successCloseBtn) successCloseBtn.addEventListener("click", () => {
+        closeSuccessModal();
+        if (isRoadmapMode) {
+          window.location.href = roadmapUrl();
+        }
+      });
       if (errorCloseBtn) errorCloseBtn.addEventListener("click", closeErrorModal);
       document.addEventListener("click", (e) => {
         const t = e.target;
@@ -433,6 +455,7 @@
 
       const jobId = qs("id");
       const q = qs("q");
+      configureModeUi();
 
       // Back button: return to details page (preferred), fallback to results
       const backBtn = document.getElementById("backBtn");
@@ -469,24 +492,40 @@
       async function applyWithFile(file) {
         clearError();
 
-        setStatus("Uploading...");
+        setStatus(isRoadmapMode ? "Generating roadmap..." : "Uploading...");
         if (pill) pill.style.pointerEvents = "none";
 
         try {
-          const userId = await getCurrentUserId();
-          const form = new FormData();
-          form.append("resume", file);
+          let res;
+          if (isRoadmapMode) {
+            const form = new FormData();
+            form.append("file", file);
+            res = await fetch(
+              `/api/resume/ocr-skill-gap?job_id=${encodeURIComponent(jobId)}`,
+              {
+                method: "POST",
+                headers: {
+                  ...authHeaders(),
+                },
+                body: form,
+              }
+            );
+          } else {
+            const userId = await getCurrentUserId();
+            const form = new FormData();
+            form.append("resume", file);
 
-          const res = await fetch(
-            `/api/applications/apply?job_id=${encodeURIComponent(jobId)}&user_id=${encodeURIComponent(userId)}`,
-            {
-              method: "POST",
-              headers: {
-                ...authHeaders(),
-              },
-              body: form,
-            }
-          );
+            res = await fetch(
+              `/api/applications/apply?job_id=${encodeURIComponent(jobId)}&user_id=${encodeURIComponent(userId)}`,
+              {
+                method: "POST",
+                headers: {
+                  ...authHeaders(),
+                },
+                body: form,
+              }
+            );
+          }
 
           const data = await res.json().catch(() => ({}));
 
@@ -500,8 +539,17 @@
             throw new Error(detail);
           }
 
-          setStatus("Application submitted.");
-          openSuccessModal();
+          if (isRoadmapMode) {
+            localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(data));
+            setStatus("Roadmap generated.");
+            openSuccessModal();
+            window.setTimeout(() => {
+              window.location.href = roadmapUrl();
+            }, 600);
+          } else {
+            setStatus("Application submitted.");
+            openSuccessModal();
+          }
         } catch (err) {
           setStatus("");
           showError(err.message || "Upload failed.");
@@ -538,6 +586,28 @@
           }
           try {
             setStatus("Using existing resume...");
+            if (isRoadmapMode) {
+              const roadmapRes = await fetch(
+                `/api/resume/ocr-skill-gap-existing?job_id=${encodeURIComponent(jobId)}`,
+                {
+                  method: "POST",
+                  headers: authHeaders(),
+                }
+              );
+              const roadmapData = await roadmapRes.json().catch(() => ({}));
+              if (!roadmapRes.ok) {
+                const detail = roadmapData && roadmapData.detail ? String(roadmapData.detail) : `HTTP ${roadmapRes.status}`;
+                throw new Error(detail || "Failed to generate roadmap.");
+              }
+              localStorage.setItem("ASCENT_ROADMAP_DATA", JSON.stringify(roadmapData));
+              setStatus("Roadmap generated.");
+              openSuccessModal();
+              window.setTimeout(() => {
+                window.location.href = roadmapUrl();
+              }, 600);
+              return;
+            }
+
             const res = await fetch("/api/resume/me", { headers: authHeaders() });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data || !data.has_resume || !data.file_url) {

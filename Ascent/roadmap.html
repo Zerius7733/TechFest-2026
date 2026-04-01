@@ -661,9 +661,40 @@
       }
 
       async function loadRoadmapData() {
-        // Prefer server roadmap by job_id if present
         const jobId = getQueryParam("id");
         const token = getToken();
+        async function fetchJobFallback(targetJobId) {
+          if (!targetJobId) return null;
+          try {
+            const res = await fetch(`/api/jobs/${encodeURIComponent(targetJobId)}`);
+            if (!res.ok) return null;
+            const job = await res.json();
+            return {
+              job_id: job.id || targetJobId,
+              job_title: job.title || "Target role",
+              company: job.company || "—",
+              gap: {
+                matched_skills: [],
+                missing_skills: [],
+              },
+              final_recommendation: {
+                skills_to_focus: [],
+                action_plan: [
+                  "Upload or reuse your resume from the Apply flow to generate a roadmap for this role.",
+                  "After generating it, reopen this page to review missing skills and course suggestions."
+                ],
+                recommended_courses: [],
+                warnings: ["Roadmap not generated for this job yet."]
+              },
+              courses: [],
+              empty_state: true
+            };
+          } catch (err) {
+            console.error(err);
+            return null;
+          }
+        }
+        // Prefer server roadmap by job_id if present
         if (jobId && token) {
           try {
             const res = await fetch("/api/roadmaps/me", { headers: authHeaders() });
@@ -679,11 +710,21 @@
           }
         }
 
-        // Fallback: last generated roadmap stored locally
+        // Use freshly generated local roadmap data before falling back to an empty state.
         try {
           const raw = localStorage.getItem("ASCENT_ROADMAP_DATA");
-          if (raw) return JSON.parse(raw);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const localJobId = parsed?.job_id || parsed?.id || parsed?.jobId;
+            if (!jobId || String(localJobId) === String(jobId)) {
+              return parsed;
+            }
+          }
         } catch {}
+        if (jobId) {
+          const fallback = await fetchJobFallback(jobId);
+          if (fallback) return fallback;
+        }
 
         // fallback demo
         return {
@@ -708,28 +749,30 @@
       async function render() {
         const data = await loadRoadmapData();
 
-        // Prefer the API payload's job_id to avoid mismatches with stale URL params
-        const jobId = data.job_id || data.id || data.jobId || getQueryParam("id") || Date.now().toString();
+        const requestedJobId = getQueryParam("id");
+        const jobId = requestedJobId || data.job_id || data.id || data.jobId || Date.now().toString();
         const company = data.company || data.company_name || "—";
 
         const jobTitle = data.job_title || data.final_recommendation?.target_role || "Target role";
         $("jobTitleBadge").textContent = jobTitle;
 
-        // Save a minimal record so Student Profile can show it in the Road Map table
-        upsertRoadmapRecord({
-          job_id: jobId,
-          company:company,
-          role: jobTitle,
-          created_at: new Date().toISOString(),
-        });
-        upsertRoadmapServer(
-          {
+        if (!data.empty_state) {
+          // Save a minimal record so Student Profile can show it in the Road Map table
+          upsertRoadmapRecord({
             job_id: jobId,
-            company: company,
+            company:company,
             role: jobTitle,
-          },
-          data
-        );
+            created_at: new Date().toISOString(),
+          });
+          upsertRoadmapServer(
+            {
+              job_id: jobId,
+              company: company,
+              role: jobTitle,
+            },
+            data
+          );
+        }
 
 
         const gap = data.gap || {};
@@ -745,6 +788,14 @@
 
         // Title
         $("pageTitle").textContent = "Your roadmap for " + jobTitle;
+        $("pageSubtitle").textContent = data.empty_state
+          ? "Roadmap not generated yet. Upload or reuse your resume to generate a roadmap for this specific role."
+          : "A step-by-step roadmap based on your resume, the target job, and SkillsFuture course matches.";
+        $("nextStepsTitle").textContent = data.empty_state ? "Generate your roadmap" : "Your 7-day plan";
+        $("nextStepsNote").textContent = data.empty_state
+          ? "We need your resume before we can analyze skill gaps, suggest courses, and build a job-specific roadmap."
+          : "Start with 2–3 missing skills, then back it up with a small project and updated resume bullets.";
+        $("matchLabel").textContent = data.empty_state ? "Pending" : "Match";
 
         // Chips
         const missingWrap = $("missingChips");
@@ -752,12 +803,39 @@
         missingWrap.innerHTML = "";
         matchedWrap.innerHTML = "";
 
-        (missing.slice(0, 14)).forEach((s) => missingWrap.appendChild(chip(s, "miss")));
-        (matched.slice(0, 14)).forEach((s) => matchedWrap.appendChild(chip(s, "ok")));
+        if (data.empty_state) {
+          missingWrap.appendChild(chip("Generate roadmap to see missing skills", "miss"));
+          matchedWrap.appendChild(chip("Generate roadmap to see matched skills", "ok"));
+        } else {
+          (missing.slice(0, 14)).forEach((s) => missingWrap.appendChild(chip(s, "miss")));
+          (matched.slice(0, 14)).forEach((s) => matchedWrap.appendChild(chip(s, "ok")));
+        }
 
         // Timeline
         const tl = $("timeline");
         tl.innerHTML = "";
+        if (data.empty_state) {
+          tl.appendChild(
+            step(
+              "Step 1 - Generate roadmap",
+              "Upload a resume or reuse your saved resume for this job to generate a roadmap."
+            )
+          );
+
+          tl.appendChild(
+            step(
+              "Step 2 - Review skill gaps",
+              "We will compare your resume against this role and identify matched and missing skills."
+            )
+          );
+
+          tl.appendChild(
+            step(
+              "Step 3 - Get course suggestions",
+              "After generation, this page will show recommended courses and a concrete action plan."
+            )
+          );
+        } else {
 
         const focus = data.final_recommendation?.skills_to_focus || missing.slice(0, 4);
         const focusLine = focus.length ? ("Focus skills: " + focus.join(", ")) : "Focus on the top missing skills first.";
@@ -792,6 +870,8 @@
           )
         );
 
+        }
+
         // Courses
         const coursesList = $("coursesList");
         coursesList.innerHTML = "";
@@ -805,8 +885,9 @@
         if (!list.length) {
           const empty = document.createElement("div");
           empty.className = "course";
-          empty.innerHTML =
-            "<p class='name'>No course matches found</p><div class='why'>Try broadening the missing skills query or lower the strong-match threshold.</div>";
+          empty.innerHTML = data.empty_state
+            ? "<p class='name'>Generate roadmap to view course matches</p><div class='why'>Once your resume is analyzed for this job, relevant course suggestions will appear here.</div>"
+            : "<p class='name'>No course matches found</p><div class='why'>Try broadening the missing skills query or lower the strong-match threshold.</div>";
           coursesList.appendChild(empty);
         } else {
           list.slice(0, 8).forEach((c) => coursesList.appendChild(courseCard(c)));
@@ -814,7 +895,15 @@
 
         // Buttons
         $("backBtn").onclick = () => history.back();
-        $("restartBtn").onclick = () => (window.location.href = "apply.html");
+        $("restartBtn").textContent = data.empty_state ? "Generate roadmap" : "Upload another resume";
+        $("restartBtn").onclick = () => {
+          const params = new URLSearchParams();
+          if (jobId) params.set("id", jobId);
+          if (CURRENT_Q) params.set("q", CURRENT_Q);
+          if (data.empty_state) params.set("mode", "roadmap");
+          const query = params.toString();
+          window.location.href = query ? `/apply?${query}` : "/apply";
+        };
         $("viewJobBtn").onclick = () => (window.location.href = `/job?id=${encodeURIComponent(jobId)}&q=${encodeURIComponent(CURRENT_Q)}`);
       }
 
